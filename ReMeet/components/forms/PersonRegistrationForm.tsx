@@ -10,6 +10,7 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FormInput } from './FormInput';
+import { TagInputWithSuggestions } from './TagInputWithSuggestions';
 import { 
   personRegistrationSchema, 
   PersonRegistrationFormData 
@@ -22,6 +23,10 @@ export interface PersonRegistrationFormProps {
   isSubmitting?: boolean;
   /** 初期値（編集時など） */
   initialData?: Partial<PersonRegistrationFormData>;
+  /** 既存タグ一覧 */
+  availableTags?: string[];
+  /** 新規タグ登録時のコールバック */
+  onNewTagsAdded?: (newTags: string[]) => void;
 }
 
 /**
@@ -32,8 +37,25 @@ export interface PersonRegistrationFormProps {
 export function PersonRegistrationForm({ 
   onSubmit, 
   isSubmitting = false,
-  initialData 
+  initialData,
+  availableTags = [],
+  onNewTagsAdded
 }: PersonRegistrationFormProps) {
+  
+  // フォーム送信時に新規タグを登録
+  const handleFormSubmit = (data: PersonRegistrationFormData) => {
+    // 入力されたタグから新規タグを抽出
+    if (data.tags && onNewTagsAdded) {
+      const inputTags = data.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+      const newTags = inputTags.filter(tag => !availableTags.includes(tag));
+      
+      if (newTags.length > 0) {
+        onNewTagsAdded(newTags);
+      }
+    }
+    
+    onSubmit(data);
+  };
   // react-hook-formの設定
   const { 
     control, 
@@ -50,6 +72,7 @@ export function PersonRegistrationForm({
       product_name: initialData?.product_name || '',
       memo: initialData?.memo || '',
       github_id: initialData?.github_id || '',
+      tags: initialData?.tags || '',
       nfc_id: initialData?.nfc_id || '',
     },
   });
@@ -186,8 +209,39 @@ export function PersonRegistrationForm({
               error={errors.github_id?.message}
               autoCapitalize="none"
               testID="github-id-input"
+              required={false}
             />
           )}
+        />
+
+        {/* タグ入力フィールド */}
+        <Controller
+          control={control}
+          name="tags"
+          render={({ field: { onChange, onBlur, value } }) => {
+            // 文字列を配列に変換
+            const tagsArray = value 
+              ? value.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+              : [];
+            
+            // 配列を文字列に変換
+            const handleTagsChange = (tags: string[]) => {
+              onChange(tags.join(', '));
+            };
+
+            return (
+              <TagInputWithSuggestions
+                label="タグ"
+                value={tagsArray}
+                onChangeText={handleTagsChange}
+                onBlur={onBlur}
+                availableTags={availableTags}
+                error={errors.tags?.message}
+                placeholder="タグを入力してEnterキーを押してください"
+                testID="tags-input"
+              />
+            );
+          }}
         />
 
         {/* NFC ID入力フィールド */}
@@ -231,7 +285,7 @@ export function PersonRegistrationForm({
         <View style={styles.buttonContainer}>
           <Button
             title="登録する"
-            onPress={handleSubmit(onSubmit)}
+            onPress={handleSubmit(handleFormSubmit)}
             disabled={isSubmitting}
             testID="submit-button"
           />

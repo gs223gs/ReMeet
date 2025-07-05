@@ -8,7 +8,7 @@
 # testing
 /coverage
 ReMeet/coverage
-
+docs/images/
 # next.js
 /.next/
 /out/
