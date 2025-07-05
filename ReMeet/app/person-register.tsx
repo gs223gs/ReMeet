@@ -13,6 +13,21 @@ import { PersonRegistrationFormData } from '@/types/forms';
 export default function PersonRegisterScreen() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [availableTags, setAvailableTags] = useState<string[]>([
+    'フロントエンド', 'バックエンド', 'React', 'TypeScript', 'JavaScript', 
+    'Python', 'Node.js', 'デザイナー', 'エンジニア', 'プロダクトマネージャー'
+  ]);
+
+  /**
+   * 新規タグ追加処理
+   */
+  const handleNewTagsAdded = (newTags: string[]) => {
+    setAvailableTags(prev => {
+      // 重複を避けて新規タグを先頭に追加
+      const uniqueNewTags = newTags.filter(tag => !prev.includes(tag));
+      return [...uniqueNewTags, ...prev];
+    });
+  };
 
   /**
    * フォーム送信時の処理
@@ -66,7 +81,8 @@ export default function PersonRegisterScreen() {
       <PersonRegistrationForm 
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
-        tagSuggestions={['フロントエンド', 'バックエンド', 'React', 'TypeScript', 'JavaScript', 'Python', 'Node.js', 'デザイナー', 'エンジニア', 'プロダクトマネージャー']}
+        availableTags={availableTags}
+        onNewTagsAdded={handleNewTagsAdded}
       />
     </ThemedView>
   );

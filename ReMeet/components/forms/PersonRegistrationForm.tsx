@@ -10,7 +10,7 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FormInput } from './FormInput';
-import { TagSelector } from './TagSelector';
+import { TagInputWithSuggestions } from './TagInputWithSuggestions';
 import { 
   personRegistrationSchema, 
   PersonRegistrationFormData 
@@ -23,8 +23,10 @@ export interface PersonRegistrationFormProps {
   isSubmitting?: boolean;
   /** 初期値（編集時など） */
   initialData?: Partial<PersonRegistrationFormData>;
-  /** タグのサジェスト一覧 */
-  tagSuggestions?: string[];
+  /** 既存タグ一覧 */
+  availableTags?: string[];
+  /** 新規タグ登録時のコールバック */
+  onNewTagsAdded?: (newTags: string[]) => void;
 }
 
 /**
@@ -36,42 +38,28 @@ export function PersonRegistrationForm({
   onSubmit, 
   isSubmitting = false,
   initialData,
-  tagSuggestions = []
+  availableTags = [],
+  onNewTagsAdded
 }: PersonRegistrationFormProps) {
-  // タグの使用履歴を管理（実際のアプリでは永続化）
-  const [tagUsageHistory, setTagUsageHistory] = React.useState<string[]>(tagSuggestions);
   
-  // 初期タグを配列に変換
-  const initialTags = initialData?.tags 
-    ? initialData.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
-    : [];
-    
-  const [selectedTags, setSelectedTags] = React.useState<string[]>(initialTags);
-  
-  // タグ変更時の処理
-  const handleTagsChange = (newTags: string[]) => {
-    setSelectedTags(newTags);
-    
-    // 使用履歴を更新（使用順で並べ替え）
-    const updatedHistory = [...tagUsageHistory];
-    newTags.forEach(tag => {
-      const existingIndex = updatedHistory.indexOf(tag);
-      if (existingIndex !== -1) {
-        // 既存のタグを先頭に移動
-        updatedHistory.splice(existingIndex, 1);
+  // フォーム送信時に新規タグを登録
+  const handleFormSubmit = (data: PersonRegistrationFormData) => {
+    // 入力されたタグから新規タグを抽出
+    if (data.tags && onNewTagsAdded) {
+      const inputTags = data.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+      const newTags = inputTags.filter(tag => !availableTags.includes(tag));
+      
+      if (newTags.length > 0) {
+        onNewTagsAdded(newTags);
       }
-      updatedHistory.unshift(tag);
-    });
-    setTagUsageHistory(updatedHistory);
+    }
     
-    // react-hook-formの値を更新
-    setValue('tags', newTags.join(', '));
+    onSubmit(data);
   };
   // react-hook-formの設定
   const { 
     control, 
     handleSubmit, 
-    setValue,
     formState: { errors } 
   } = useForm<PersonRegistrationFormData>({
     resolver: zodResolver(personRegistrationSchema),
@@ -226,14 +214,22 @@ export function PersonRegistrationForm({
           )}
         />
 
-        {/* タグ選択フィールド */}
-        <TagSelector
-          label="タグ"
-          selectedTags={selectedTags}
-          availableTags={tagUsageHistory}
-          onTagsChange={handleTagsChange}
-          error={errors.tags?.message}
-          testID="tags-selector"
+        {/* タグ入力フィールド */}
+        <Controller
+          control={control}
+          name="tags"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TagInputWithSuggestions
+              label="タグ"
+              value={value || ''}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              availableTags={availableTags}
+              error={errors.tags?.message}
+              placeholder="新規タグをカンマ区切りで入力"
+              testID="tags-input"
+            />
+          )}
         />
 
         {/* NFC ID入力フィールド */}
@@ -277,7 +273,7 @@ export function PersonRegistrationForm({
         <View style={styles.buttonContainer}>
           <Button
             title="登録する"
-            onPress={handleSubmit(onSubmit)}
+            onPress={handleSubmit(handleFormSubmit)}
             disabled={isSubmitting}
             testID="submit-button"
           />
