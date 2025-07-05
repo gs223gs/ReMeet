@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, StyleSheet, Pressable } from 'react-native';
 import { useThemeColor } from '@/hooks/useThemeColor';
 
 export interface TagInputProps {
@@ -28,6 +28,7 @@ export function TagInput({
   suggestions = []
 }: TagInputProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   const textColor = useThemeColor({}, 'text');
   const defaultBorderColor = useThemeColor({}, 'tabIconDefault');
   const backgroundColor = useThemeColor({}, 'background');
@@ -62,6 +63,12 @@ export function TagInput({
   })();
 
   const handleSuggestionPress = (suggestion: string) => {
+    // タイムアウトをクリア
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
     const tags = value.split(',').map(tag => tag.trim());
     tags[tags.length - 1] = suggestion;
     onChangeText(tags.join(', '));
@@ -79,9 +86,21 @@ export function TagInput({
 
   const handleBlur = () => {
     // 少し遅延させてサジェストのタップを可能にする
-    setTimeout(() => setShowSuggestions(false), 100);
+    timeoutRef.current = setTimeout(() => {
+      setShowSuggestions(false);
+      timeoutRef.current = null;
+    }, 200);
     onBlur?.();
   };
+
+  // クリーンアップ
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -119,16 +138,20 @@ export function TagInput({
       {showSuggestions && filteredSuggestions.length > 0 && (
         <View style={[styles.suggestionsContainer, { backgroundColor }]}>
           {filteredSuggestions.map((suggestion, index) => (
-            <TouchableOpacity
+            <Pressable
               key={index}
-              style={[styles.suggestionItem, { borderColor }]}
+              style={({ pressed }) => [
+                styles.suggestionItem, 
+                { borderColor },
+                pressed && styles.suggestionItemPressed
+              ]}
               onPress={() => handleSuggestionPress(suggestion)}
               testID={`${testID}-suggestion-${index}`}
             >
               <Text style={[styles.suggestionText, { color: textColor }]}>
                 {suggestion}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       )}
@@ -178,5 +201,8 @@ const styles = StyleSheet.create({
   },
   suggestionText: {
     fontSize: 14,
+  },
+  suggestionItemPressed: {
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
   },
 });
