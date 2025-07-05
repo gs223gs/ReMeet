@@ -4,8 +4,8 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 
 export interface TagInputWithSuggestionsProps {
   label: string;
-  value: string;
-  onChangeText: (text: string) => void;
+  value: string[];
+  onChangeText: (tags: string[]) => void;
   onBlur?: () => void;
   availableTags: string[];
   error?: string;
@@ -14,8 +14,9 @@ export interface TagInputWithSuggestionsProps {
 }
 
 /**
- * テキスト入力 + 既存タグ選択メニュー
- * 新規タグはテキスト入力、既存タグはトグルメニューから選択
+ * エンターキー入力でタグ追加 + 既存タグ選択メニュー
+ * 新規タグはエンターキーで追加、既存タグはトグルメニューから選択
+ * 選択済みタグは下部にバツボタン付きで表示
  */
 export function TagInputWithSuggestions({
   label,
@@ -28,28 +29,50 @@ export function TagInputWithSuggestions({
   placeholder,
 }: TagInputWithSuggestionsProps) {
   const [showExistingTags, setShowExistingTags] = useState(false);
+  const [inputText, setInputText] = useState('');
   const textColor = useThemeColor({}, 'text');
   const backgroundColor = useThemeColor({}, 'background');
   const primaryColor = useThemeColor({}, 'tint');
   const defaultBorderColor = useThemeColor({}, 'tabIconDefault');
   const borderColor = error ? '#FF6B6B' : defaultBorderColor;
 
-  // 現在のタグを配列に変換
-  const currentTags = value
-    ? value.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
-    : [];
+  // 現在のタグ配列
+  const currentTags = value || [];
+
+  // 新規タグ追加処理
+  const handleAddTag = () => {
+    const trimmedText = inputText.trim();
+    if (trimmedText && !currentTags.includes(trimmedText)) {
+      const newTags = [...currentTags, trimmedText];
+      onChangeText(newTags);
+      setInputText('');
+    }
+  };
+
+  // エンターキー処理
+  const handleKeyPress = (e: any) => {
+    if (e.nativeEvent.key === 'Enter') {
+      handleAddTag();
+    }
+  };
 
   // 既存タグをタップした時の処理
   const handleExistingTagPress = (tag: string) => {
     if (currentTags.includes(tag)) {
       // 既に選択されている場合は削除
       const newTags = currentTags.filter(t => t !== tag);
-      onChangeText(newTags.join(', '));
+      onChangeText(newTags);
     } else {
       // 選択されていない場合は追加
       const newTags = [...currentTags, tag];
-      onChangeText(newTags.join(', '));
+      onChangeText(newTags);
     }
+  };
+
+  // タグ削除処理
+  const handleRemoveTag = (tagToRemove: string) => {
+    const newTags = currentTags.filter(tag => tag !== tagToRemove);
+    onChangeText(newTags);
   };
 
   return (
@@ -68,10 +91,11 @@ export function TagInputWithSuggestions({
             backgroundColor,
           }
         ]}
-        placeholder={placeholder}
+        placeholder={placeholder || "タグを入力してEnterキーを押してください"}
         placeholderTextColor={defaultBorderColor}
-        value={value}
-        onChangeText={onChangeText}
+        value={inputText}
+        onChangeText={setInputText}
+        onKeyPress={handleKeyPress}
         onBlur={onBlur}
         autoCapitalize="none"
         testID={testID}
@@ -131,12 +155,34 @@ export function TagInputWithSuggestions({
         </View>
       )}
 
-      {/* 選択中タグの表示 */}
+      {/* 選択済みタグリスト（バツボタン付き） */}
       {currentTags.length > 0 && (
-        <View style={[styles.selectedTagsInfo, { backgroundColor: 'rgba(0, 0, 0, 0.05)' }]}>
-          <Text style={[styles.selectedTagsText, { color: textColor }]}>
-            選択中: {currentTags.join(', ')}
+        <View style={styles.selectedTagsContainer}>
+          <Text style={[styles.selectedTagsLabel, { color: textColor }]}>
+            選択済みタグ:
           </Text>
+          <View style={styles.selectedTagsList}>
+            {currentTags.map((tag, index) => (
+              <View
+                key={tag}
+                style={[styles.selectedTagChip, { backgroundColor: primaryColor }]}
+                testID={`${testID}-selected-tag-${index}`}
+              >
+                <Text style={[styles.selectedTagText, { color: backgroundColor }]}>
+                  {tag}
+                </Text>
+                <Pressable
+                  style={styles.removeTagButton}
+                  onPress={() => handleRemoveTag(tag)}
+                  testID={`${testID}-remove-tag-${index}`}
+                >
+                  <Text style={[styles.removeTagButtonText, { color: backgroundColor }]}>
+                    ×
+                  </Text>
+                </Pressable>
+              </View>
+            ))}
+          </View>
         </View>
       )}
 
@@ -205,14 +251,43 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  selectedTagsInfo: {
-    marginTop: 8,
-    padding: 8,
-    borderRadius: 6,
+  selectedTagsContainer: {
+    marginTop: 12,
   },
-  selectedTagsText: {
+  selectedTagsLabel: {
     fontSize: 14,
-    fontStyle: 'italic',
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  selectedTagsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  selectedTagChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginBottom: 4,
+  },
+  selectedTagText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  removeTagButton: {
+    marginLeft: 8,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  removeTagButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   errorText: {
     color: '#FF6B6B',

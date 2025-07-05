@@ -218,18 +218,30 @@ export function PersonRegistrationForm({
         <Controller
           control={control}
           name="tags"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <TagInputWithSuggestions
-              label="タグ"
-              value={value || ''}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              availableTags={availableTags}
-              error={errors.tags?.message}
-              placeholder="新規タグをカンマ区切りで入力"
-              testID="tags-input"
-            />
-          )}
+          render={({ field: { onChange, onBlur, value } }) => {
+            // 文字列を配列に変換
+            const tagsArray = value 
+              ? value.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+              : [];
+            
+            // 配列を文字列に変換
+            const handleTagsChange = (tags: string[]) => {
+              onChange(tags.join(', '));
+            };
+
+            return (
+              <TagInputWithSuggestions
+                label="タグ"
+                value={tagsArray}
+                onChangeText={handleTagsChange}
+                onBlur={onBlur}
+                availableTags={availableTags}
+                error={errors.tags?.message}
+                placeholder="タグを入力してEnterキーを押してください"
+                testID="tags-input"
+              />
+            );
+          }}
         />
 
         {/* NFC ID入力フィールド */}

@@ -75,7 +75,14 @@ describe('PersonRegistrationForm', () => {
     fireEvent.changeText(getByTestId('description-input'), validData.description);
     fireEvent.changeText(getByTestId('product-name-input'), validData.product_name);
     fireEvent.changeText(getByTestId('github-id-input'), validData.github_id);
-    fireEvent.changeText(getByTestId('tags-input'), validData.tags);
+    
+    // タグを入力（Enterキーで追加）
+    const tags = validData.tags.split(', ');
+    for (const tag of tags) {
+      fireEvent.changeText(getByTestId('tags-input'), tag);
+      fireEvent(getByTestId('tags-input'), 'onKeyPress', { nativeEvent: { key: 'Enter' } });
+    }
+    
     fireEvent.changeText(getByTestId('nfc-id-input'), validData.nfc_id);
     fireEvent.changeText(getByTestId('memo-input'), validData.memo);
     
@@ -269,6 +276,7 @@ describe('PersonRegistrationForm', () => {
     expect(getByTestId('name-input').props.value).toBe(initialData.name);
     expect(getByTestId('company-input').props.value).toBe(initialData.company);
     expect(getByTestId('github-id-input').props.value).toBe(initialData.github_id);
-    expect(getByTestId('tags-input').props.value).toBe(initialData.tags);
+    // タグの初期値は選択済みタグとして表示される
+    expect(getByTestId('tags-input').props.value).toBe(''); // 入力フィールドは空
   });
 });
