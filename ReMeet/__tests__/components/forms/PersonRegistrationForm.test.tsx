@@ -80,7 +80,7 @@ describe('PersonRegistrationForm', () => {
     const tags = validData.tags.split(', ');
     for (const tag of tags) {
       fireEvent.changeText(getByTestId('tags-input'), tag);
-      fireEvent(getByTestId('tags-input'), 'onKeyPress', { nativeEvent: { key: 'Enter' } });
+      fireEvent.press(getByTestId('tags-input-add-button'));
     }
     
     fireEvent.changeText(getByTestId('nfc-id-input'), validData.nfc_id);
