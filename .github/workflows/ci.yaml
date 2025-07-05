@@ -31,3 +31,28 @@ jobs:
     - name: Build Expo project
       run: npx expo export --platform web
       working-directory: ReMeet
+  
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: ReMeet/package-lock.json
+    
+    - name: Install dependencies
+      run: npm ci
+      working-directory: ReMeet
+    
+    - name: Run tests
+      run: npm test
+      working-directory: ReMeet
+    
+    - name: Run tests with coverage
+      run: npm run test:coverage
+      working-directory: ReMeet
