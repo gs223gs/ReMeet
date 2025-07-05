@@ -52,9 +52,9 @@ describe('sqlite TagService', () => {
         created_at: '2025-01-01T00:00:00.000Z',
       };
 
-      mockDb.getAllAsync
-        .mockResolvedValueOnce([]) // 既存タグのチェック（存在しない）
-        .mockResolvedValueOnce([mockTag]); // 作成したタグの取得
+      mockDb.getFirstAsync
+        .mockResolvedValueOnce(null) // 既存タグのチェック（存在しない）
+        .mockResolvedValueOnce(mockTag); // 作成したタグの取得
 
       // Act: タグを作成
       const result = await TagService.create(tagData);
@@ -77,7 +77,7 @@ describe('sqlite TagService', () => {
         created_at: '2025-01-01T00:00:00.000Z',
       };
 
-      mockDb.getAllAsync.mockResolvedValue([existingTag]);
+      mockDb.getFirstAsync.mockResolvedValue(existingTag);
       
       // Act: 同じ名前でタグを作成
       const result = await TagService.create({ name: 'TypeScript' });
@@ -100,16 +100,16 @@ describe('sqlite TagService', () => {
         created_at: '2025-01-01T00:00:00.000Z',
       };
 
-      mockDb.getAllAsync
-        .mockResolvedValueOnce([]) // 既存タグのチェック
-        .mockResolvedValueOnce([mockTag]); // 作成したタグの取得
+      mockDb.getFirstAsync
+        .mockResolvedValueOnce(null) // 既存タグのチェック
+        .mockResolvedValueOnce(mockTag); // 作成したタグの取得
 
       // Act: タグを作成
       const result = await TagService.create(tagData);
 
       // Assert: 空白が除去されることを確認
       expect(result.name).toBe('JavaScript');
-      expect(mockDb.getAllAsync).toHaveBeenCalledWith(
+      expect(mockDb.getFirstAsync).toHaveBeenCalledWith(
         'SELECT * FROM tags WHERE name = ?',
         ['JavaScript'] // 正規化された名前で検索されること
       );

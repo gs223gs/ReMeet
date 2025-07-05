@@ -38,6 +38,11 @@ describe('sqlite PersonService', () => {
     jest.clearAllMocks();
     const { getDatabase } = require('@/database/sqlite-client');
     getDatabase.mockResolvedValue(mockDb);
+    
+    // withTransactionAsyncのモックを設定
+    mockDb.withTransactionAsync.mockImplementation(async (fn) => {
+      return await fn();
+    });
   });
 
   describe('create', () => {
@@ -68,7 +73,7 @@ describe('sqlite PersonService', () => {
         updated_at: '2025-01-01T00:00:00.000Z',
       };
 
-      mockDb.getAllAsync.mockResolvedValue([mockPerson]);
+      mockDb.getFirstAsync.mockResolvedValue(mockPerson);
 
       // Act: 人物を作成
       const result = await PersonService.create(personData);
@@ -105,7 +110,7 @@ describe('sqlite PersonService', () => {
         updated_at: '2025-01-01T00:00:00.000Z',
       };
 
-      mockDb.getAllAsync.mockResolvedValue([mockPerson]);
+      mockDb.getFirstAsync.mockResolvedValue(mockPerson);
 
       // Act: 人物を作成
       const result = await PersonService.create(personData);
@@ -148,7 +153,7 @@ describe('sqlite PersonService', () => {
         updated_at: '2025-01-01T00:00:00.000Z',
       };
 
-      mockDb.getAllAsync.mockResolvedValue([mockPerson]);
+      mockDb.getFirstAsync.mockResolvedValue(mockPerson);
 
       // Act: 人物を作成
       const result = await PersonService.create(personData);
@@ -191,9 +196,8 @@ describe('sqlite PersonService', () => {
         { id: 'tag-2', name: 'TypeScript', created_at: '2025-01-01T00:00:00.000Z' },
       ];
 
-      mockDb.getAllAsync
-        .mockResolvedValueOnce([mockPerson]) // 人物情報の取得
-        .mockResolvedValueOnce(mockTags);    // タグ情報の取得
+      mockDb.getFirstAsync.mockResolvedValueOnce(mockPerson); // 人物情報の取得
+      mockDb.getAllAsync.mockResolvedValueOnce(mockTags);    // タグ情報の取得
 
       // Act: IDで人物を検索
       const result = await PersonService.findById('test-id-123');
@@ -209,7 +213,7 @@ describe('sqlite PersonService', () => {
 
     it('存在しない人物を検索するとnullが返る', async () => {
       // Arrange: 空の結果を設定
-      mockDb.getAllAsync.mockResolvedValue([]);
+      mockDb.getFirstAsync.mockResolvedValue(null);
 
       // Act: 存在しないIDで検索
       const result = await PersonService.findById('non-existent-id');
