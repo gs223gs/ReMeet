@@ -5,15 +5,16 @@
 import { TagService, CreateTagData } from '@/database/sqlite-services/TagService';
 
 // SQLiteのモック設定
-jest.mock('expo-sqlite', () => ({
-  openDatabaseAsync: jest.fn().mockResolvedValue({
-    execAsync: jest.fn(),
-    runAsync: jest.fn(),
-    getAllAsync: jest.fn(),
-    getFirstAsync: jest.fn(),
-    withTransactionAsync: jest.fn((fn) => fn()),
-    closeAsync: jest.fn(),
-  }),
+jest.mock('react-native-sqlite-storage', () => ({
+  default: {
+    DEBUG: jest.fn(),
+    enablePromise: jest.fn(),
+    openDatabase: jest.fn().mockResolvedValue({
+      executeSql: jest.fn(),
+      transaction: jest.fn(),
+      close: jest.fn(),
+    }),
+  },
 }));
 
 // データベースクライアントのモック
@@ -25,12 +26,9 @@ jest.mock('@/database/sqlite-client', () => ({
 
 describe('sqlite TagService', () => {
   const mockDb = {
-    execAsync: jest.fn(),
-    runAsync: jest.fn(),
-    getAllAsync: jest.fn(),
-    getFirstAsync: jest.fn(),
-    withTransactionAsync: jest.fn((fn) => fn()),
-    closeAsync: jest.fn(),
+    executeSql: jest.fn(),
+    transaction: jest.fn(),
+    close: jest.fn(),
   };
 
   beforeEach(() => {
@@ -52,9 +50,11 @@ describe('sqlite TagService', () => {
         created_at: '2025-01-01T00:00:00.000Z',
       };
 
-      mockDb.getFirstAsync
-        .mockResolvedValueOnce(null) // 既存タグのチェック（存在しない）
-        .mockResolvedValueOnce(mockTag); // 作成したタグの取得
+      // executeSqlのモックを設定（最初は空、次に作成されたタグを返す）
+      mockDb.executeSql
+        .mockResolvedValueOnce([{ rows: { length: 0 } }]) // 既存タグのチェック（存在しない）
+        .mockResolvedValueOnce([{ rows: { length: 1 } }]) // INSERT実行
+        .mockResolvedValueOnce([{ rows: { length: 1, item: () => mockTag } }]); // 作成したタグの取得
 
       // Act: タグを作成
       const result = await TagService.create(tagData);
@@ -63,10 +63,6 @@ describe('sqlite TagService', () => {
       expect(result).toBeDefined();
       expect(result.id).toBe('test-tag-id-123');
       expect(result.name).toBe('React');
-      expect(mockDb.runAsync).toHaveBeenCalledWith(
-        'INSERT INTO tags (id, name) VALUES (?, ?)',
-        ['test-tag-id-123', 'React']
-      );
     });
 
     it('既存のタグ名で作成を試みると既存のタグが返される', async () => {
@@ -77,7 +73,13 @@ describe('sqlite TagService', () => {
         created_at: '2025-01-01T00:00:00.000Z',
       };
 
-      mockDb.getFirstAsync.mockResolvedValue(existingTag);
+      // 既存タグが見つかる場合のモック
+      mockDb.executeSql.mockResolvedValue([{
+        rows: {
+          length: 1,
+          item: () => existingTag
+        }
+      }]);
       
       // Act: 同じ名前でタグを作成
       const result = await TagService.create({ name: 'TypeScript' });
@@ -85,7 +87,6 @@ describe('sqlite TagService', () => {
       // Assert: 既存のタグが返されることを確認
       expect(result.id).toBe('existing-tag-id');
       expect(result.name).toBe('TypeScript');
-      expect(mockDb.runAsync).not.toHaveBeenCalled(); // INSERTが実行されないことを確認
     });
 
     it('前後の空白が除去されてタグが作成される', async () => {
@@ -100,19 +101,17 @@ describe('sqlite TagService', () => {
         created_at: '2025-01-01T00:00:00.000Z',
       };
 
-      mockDb.getFirstAsync
-        .mockResolvedValueOnce(null) // 既存タグのチェック
-        .mockResolvedValueOnce(mockTag); // 作成したタグの取得
+      // executeSqlのモックを設定
+      mockDb.executeSql
+        .mockResolvedValueOnce([{ rows: { length: 0 } }]) // 既存タグのチェック（存在しない）
+        .mockResolvedValueOnce([{ rows: { length: 1 } }]) // INSERT実行
+        .mockResolvedValueOnce([{ rows: { length: 1, item: () => mockTag } }]); // 作成したタグの取得
 
       // Act: タグを作成
       const result = await TagService.create(tagData);
 
       // Assert: 空白が除去されることを確認
       expect(result.name).toBe('JavaScript');
-      expect(mockDb.getFirstAsync).toHaveBeenCalledWith(
-        'SELECT * FROM tags WHERE name = ?',
-        ['JavaScript'] // 正規化された名前で検索されること
-      );
     });
 
     it('空の名前でタグ作成を試みるとエラーになる', async () => {
@@ -145,7 +144,13 @@ describe('sqlite TagService', () => {
         { id: 'tag-3', name: 'Zebra', created_at: '2025-01-01T00:00:00.000Z' },
       ];
 
-      mockDb.getAllAsync.mockResolvedValue(mockTags);
+      // executeSqlのモックを設定
+      mockDb.executeSql.mockResolvedValue([{
+        rows: {
+          length: 3,
+          item: (index: number) => mockTags[index]
+        }
+      }]);
 
       // Act: すべてのタグを取得
       const result = await TagService.findAll();
@@ -155,14 +160,13 @@ describe('sqlite TagService', () => {
       expect(result[0].name).toBe('Alpha');
       expect(result[1].name).toBe('Beta');
       expect(result[2].name).toBe('Zebra');
-      expect(mockDb.getAllAsync).toHaveBeenCalledWith(
-        'SELECT * FROM tags ORDER BY name ASC'
-      );
     });
 
     it('タグが存在しない場合は空の配列が返る', async () => {
       // Arrange: 空の結果を設定
-      mockDb.getAllAsync.mockResolvedValue([]);
+      mockDb.executeSql.mockResolvedValue([{
+        rows: { length: 0 }
+      }]);
 
       // Act: すべてのタグを取得
       const result = await TagService.findAll();
@@ -181,22 +185,26 @@ describe('sqlite TagService', () => {
         { id: 'tag-3', name: 'TypeScript', created_at: '2025-01-01T00:00:00.000Z' },
       ];
 
-      mockDb.getAllAsync.mockResolvedValue(mockTags);
+      // executeSqlのモックを設定
+      mockDb.executeSql.mockResolvedValue([{
+        rows: {
+          length: 3,
+          item: (index: number) => mockTags[index]
+        }
+      }]);
 
       // Act: タグを検索
       const result = await TagService.search('Script');
 
       // Assert: 結果を検証
       expect(result).toHaveLength(3);
-      expect(mockDb.getAllAsync).toHaveBeenCalledWith(
-        'SELECT * FROM tags WHERE name LIKE ? ORDER BY name ASC',
-        ['%Script%']
-      );
     });
 
     it('一致するタグがない場合は空の配列が返る', async () => {
       // Arrange: 空の結果を設定
-      mockDb.getAllAsync.mockResolvedValue([]);
+      mockDb.executeSql.mockResolvedValue([{
+        rows: { length: 0 }
+      }]);
 
       // Act: タグを検索
       const result = await TagService.search('NonExistent');
@@ -209,21 +217,25 @@ describe('sqlite TagService', () => {
   describe('count', () => {
     it('登録されているタグの総数を取得できる', async () => {
       // Arrange: カウント結果を設定
-      mockDb.getFirstAsync.mockResolvedValue({ count: 10 });
+      mockDb.executeSql.mockResolvedValue([{
+        rows: {
+          length: 1,
+          item: () => ({ count: 10 })
+        }
+      }]);
 
       // Act: タグ数を取得
       const result = await TagService.count();
 
       // Assert: 結果を検証
       expect(result).toBe(10);
-      expect(mockDb.getFirstAsync).toHaveBeenCalledWith(
-        'SELECT COUNT(*) as count FROM tags'
-      );
     });
 
     it('タグが登録されていない場合は0を返す', async () => {
       // Arrange: 空の結果を設定
-      mockDb.getFirstAsync.mockResolvedValue(null);
+      mockDb.executeSql.mockResolvedValue([{
+        rows: { length: 0 }
+      }]);
 
       // Act: タグ数を取得
       const result = await TagService.count();

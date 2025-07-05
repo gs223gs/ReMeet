@@ -1,8 +1,9 @@
 /**
- * expo-sqliteを使用したSQLiteデータベースクライアント
+ * react-native-sqlite-storageを使用したSQLiteデータベースクライアント
  * React Native環境で動作するデータベース接続とスキーマ管理
  */
-import * as SQLite from 'expo-sqlite';
+import SQLite from 'react-native-sqlite-storage';
+import { Platform } from 'react-native';
 
 /**
  * データベース名
@@ -14,13 +15,20 @@ const DATABASE_NAME = 'remeet.db';
  */
 let database: SQLite.SQLiteDatabase | null = null;
 
+// SQLiteのデバッグを有効化
+SQLite.DEBUG(true);
+SQLite.enablePromise(true);
+
 /**
  * データベース接続を取得する
  * シングルトンパターンでデータベースインスタンスを管理
  */
 export const getDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
   if (!database) {
-    database = await SQLite.openDatabaseAsync(DATABASE_NAME);
+    database = await SQLite.openDatabase({
+      name: DATABASE_NAME,
+      location: 'default',
+    });
     await initializeDatabase(database);
   }
   return database;
@@ -33,10 +41,10 @@ export const getDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
 const initializeDatabase = async (db: SQLite.SQLiteDatabase): Promise<void> => {
   try {
     // 外部キー制約を有効化
-    await db.execAsync('PRAGMA foreign_keys = ON;');
+    await db.executeSql('PRAGMA foreign_keys = ON;');
 
     // usersテーブルの作成
-    await db.execAsync(`
+    await db.executeSql(`
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
@@ -54,7 +62,7 @@ const initializeDatabase = async (db: SQLite.SQLiteDatabase): Promise<void> => {
     `);
 
     // personsテーブルの作成
-    await db.execAsync(`
+    await db.executeSql(`
       CREATE TABLE IF NOT EXISTS persons (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
@@ -71,57 +79,57 @@ const initializeDatabase = async (db: SQLite.SQLiteDatabase): Promise<void> => {
     `);
 
     // tagsテーブルの作成
-    await db.execAsync(`
+    await db.executeSql(`
       CREATE TABLE IF NOT EXISTS tags (
         id TEXT PRIMARY KEY,
-        name TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL UNIQUE,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
     // eventsテーブルの作成
-    await db.execAsync(`
+    await db.executeSql(`
       CREATE TABLE IF NOT EXISTS events (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
-        date DATETIME,
+        date DATE,
         location TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
     // relationsテーブルの作成
-    await db.execAsync(`
+    await db.executeSql(`
       CREATE TABLE IF NOT EXISTS relations (
         id TEXT PRIMARY KEY,
         source_id TEXT NOT NULL,
         target_id TEXT NOT NULL,
         relation_type TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (source_id) REFERENCES persons (id) ON DELETE CASCADE,
-        FOREIGN KEY (target_id) REFERENCES persons (id) ON DELETE CASCADE
+        FOREIGN KEY (source_id) REFERENCES persons(id) ON DELETE CASCADE,
+        FOREIGN KEY (target_id) REFERENCES persons(id) ON DELETE CASCADE
       );
     `);
 
     // persons_tagsテーブルの作成（中間テーブル）
-    await db.execAsync(`
+    await db.executeSql(`
       CREATE TABLE IF NOT EXISTS persons_tags (
         person_id TEXT NOT NULL,
         tag_id TEXT NOT NULL,
         PRIMARY KEY (person_id, tag_id),
-        FOREIGN KEY (person_id) REFERENCES persons (id) ON DELETE CASCADE,
-        FOREIGN KEY (tag_id) REFERENCES tags (id) ON DELETE CASCADE
+        FOREIGN KEY (person_id) REFERENCES persons(id) ON DELETE CASCADE,
+        FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
       );
     `);
 
     // persons_eventsテーブルの作成（中間テーブル）
-    await db.execAsync(`
+    await db.executeSql(`
       CREATE TABLE IF NOT EXISTS persons_events (
         person_id TEXT NOT NULL,
         event_id TEXT NOT NULL,
         PRIMARY KEY (person_id, event_id),
-        FOREIGN KEY (person_id) REFERENCES persons (id) ON DELETE CASCADE,
-        FOREIGN KEY (event_id) REFERENCES events (id) ON DELETE CASCADE
+        FOREIGN KEY (person_id) REFERENCES persons(id) ON DELETE CASCADE,
+        FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
       );
     `);
 
@@ -133,22 +141,23 @@ const initializeDatabase = async (db: SQLite.SQLiteDatabase): Promise<void> => {
 };
 
 /**
- * 一意のIDを生成する
- * cuidのシンプルな代替実装
- */
-export const generateId = (): string => {
-  const timestamp = Date.now().toString(36);
-  const randomPart = Math.random().toString(36).substring(2, 15);
-  return `${timestamp}${randomPart}`;
-};
-
-/**
  * データベース接続を閉じる
- * 通常はアプリ終了時に呼び出す
  */
 export const closeDatabase = async (): Promise<void> => {
   if (database) {
-    await database.closeAsync();
+    await database.close();
     database = null;
+    console.log('データベース接続を閉じました');
   }
+};
+
+/**
+ * UUIDv4を生成する
+ */
+export const generateId = (): string => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
 };

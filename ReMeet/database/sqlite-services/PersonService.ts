@@ -1,5 +1,5 @@
 /**
- * expo-sqlite用の人物管理サービス
+ * react-native-sqlite-storage用の人物管理サービス
  * SQLiteデータベースを使用した人物のCRUD操作
  */
 import { getDatabase, generateId } from '../sqlite-client';
@@ -45,7 +45,7 @@ export interface PersonSearchFilter {
 }
 
 /**
- * expo-sqlite用の人物サービスクラス
+ * react-native-sqlite-storage用の人物サービスクラス
  */
 export class PersonService {
   /**
@@ -64,129 +64,64 @@ export class PersonService {
       const personId = generateId();
 
       // トランザクション内で人物とタグの関連を同時に登録
-      await db.withTransactionAsync(async () => {
-        // 人物を作成
-        await db.runAsync(`
-          INSERT INTO persons (
-            id, name, handle, company, position, description, 
-            product_name, memo, github_id
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [
-          personId,
-          data.name.trim(),
-          data.handle || null,
-          data.company || null,
-          data.position || null,
-          data.description || null,
-          data.productName || null,
-          data.memo || null,
-          data.githubId || null,
-        ]);
-
-        // タグとの関連を作成
-        if (data.tagIds && data.tagIds.length > 0) {
-          for (const tagId of data.tagIds) {
-            await db.runAsync(
-              'INSERT INTO persons_tags (person_id, tag_id) VALUES (?, ?)',
-              [personId, tagId]
+      return new Promise((resolve, reject) => {
+        db.transaction((tx) => {
+          // 人物を作成
+          tx.executeSql(
+            `INSERT INTO persons (
+              id, name, handle, company, position, description, 
+              product_name, memo, github_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              personId,
+              data.name.trim(),
+              data.handle || null,
+              data.company || null,
+              data.position || null,
+              data.description || null,
+              data.productName || null,
+              data.memo || null,
+              data.githubId || null,
+            ],
+            (_, result) => {
+              // タグとの関連を作成
+              if (data.tagIds && data.tagIds.length > 0) {
+                data.tagIds.forEach((tagId) => {
+                  tx.executeSql(
+                    'INSERT INTO persons_tags (person_id, tag_id) VALUES (?, ?)',
+                    [personId, tagId]
+                  );
+                });
+              }
+            },
+            (_, error) => {
+              reject(new Error(`人物の作成に失敗しました: ${error.message}`));
+              return false;
+            }
+          );
+        }, 
+        (error) => {
+          reject(new Error(`人物の登録に失敗しました: ${error.message}`));
+        },
+        async () => {
+          // トランザクション成功後、作成した人物を取得
+          try {
+            const [results] = await db.executeSql(
+              'SELECT * FROM persons WHERE id = ?',
+              [personId]
             );
+            if (results.rows.length > 0) {
+              resolve(results.rows.item(0) as Person);
+            } else {
+              reject(new Error('人物の作成に失敗しました'));
+            }
+          } catch (error) {
+            reject(error);
           }
-        }
+        });
       });
-
-      // 作成した人物を取得して返す
-      const person = await db.getFirstAsync<Person>(
-        'SELECT * FROM persons WHERE id = ?',
-        [personId]
-      );
-
-      if (!person) {
-        throw new Error('人物の作成に失敗しました');
-      }
-
-      return person;
     } catch (error) {
       throw new Error(`人物の登録に失敗しました: ${error}`);
-    }
-  }
-
-  /**
-   * 人物を更新する
-   * @param id 更新する人物のID
-   * @param data 更新データ
-   * @returns 更新された人物データ
-   */
-  static async update(id: string, data: UpdatePersonData): Promise<Person> {
-    try {
-      const db = await getDatabase();
-
-      await db.withTransactionAsync(async () => {
-        // 人物データを更新
-        await db.runAsync(`
-          UPDATE persons SET
-            name = COALESCE(?, name),
-            handle = COALESCE(?, handle),
-            company = COALESCE(?, company),
-            position = COALESCE(?, position),
-            description = COALESCE(?, description),
-            product_name = COALESCE(?, product_name),
-            memo = COALESCE(?, memo),
-            github_id = COALESCE(?, github_id),
-            updated_at = CURRENT_TIMESTAMP
-          WHERE id = ?
-        `, [
-          data.name || null,
-          data.handle || null,
-          data.company || null,
-          data.position || null,
-          data.description || null,
-          data.productName || null,
-          data.memo || null,
-          data.githubId || null,
-          id
-        ]);
-
-        // タグの関連を更新（既存の関連をすべて削除して新しく作成）
-        if (data.tagIds !== undefined) {
-          await db.runAsync('DELETE FROM persons_tags WHERE person_id = ?', [id]);
-
-          if (data.tagIds.length > 0) {
-            for (const tagId of data.tagIds) {
-              await db.runAsync(
-                'INSERT INTO persons_tags (person_id, tag_id) VALUES (?, ?)',
-                [id, tagId]
-              );
-            }
-          }
-        }
-      });
-
-      // 更新された人物を取得して返す
-      const person = await db.getFirstAsync<Person>(
-        'SELECT * FROM persons WHERE id = ?',
-        [id]
-      );
-
-      if (!person) {
-        throw new Error('更新対象の人物が見つかりません');
-      }
-
-      return person;
-    } catch (error) {
-      throw new Error(`人物の更新に失敗しました: ${error}`);
-    }
-  }
-
-  /**
-   * 人物を削除する
-   * @param id 削除する人物のID
-   */
-  static async delete(id: string): Promise<void> {
-    try {
-      const db = await getDatabase();
-      await db.runAsync('DELETE FROM persons WHERE id = ?', [id]);
-    } catch (error) {
-      throw new Error(`人物の削除に失敗しました: ${error}`);
     }
   }
 
@@ -200,22 +135,29 @@ export class PersonService {
       const db = await getDatabase();
       
       // 人物情報を取得
-      const person = await db.getFirstAsync<Person>(
+      const [personResults] = await db.executeSql(
         'SELECT * FROM persons WHERE id = ?',
         [id]
       );
 
-      if (!person) {
+      if (personResults.rows.length === 0) {
         return null;
       }
 
+      const person = personResults.rows.item(0) as Person;
+
       // 関連するタグを取得
-      const tags = await db.getAllAsync<Tag>(`
+      const [tagResults] = await db.executeSql(`
         SELECT t.* FROM tags t
         INNER JOIN persons_tags pt ON t.id = pt.tag_id
         WHERE pt.person_id = ?
         ORDER BY t.name ASC
       `, [id]);
+
+      const tags: Tag[] = [];
+      for (let i = 0; i < tagResults.rows.length; i++) {
+        tags.push(tagResults.rows.item(i) as Tag);
+      }
 
       return {
         ...person,
@@ -265,17 +207,26 @@ export class PersonService {
 
       query += ' ORDER BY created_at DESC';
 
-      const persons = await db.getAllAsync<Person>(query, params);
+      const [results] = await db.executeSql(query, params);
+      const persons: Person[] = [];
+      for (let i = 0; i < results.rows.length; i++) {
+        persons.push(results.rows.item(i) as Person);
+      }
 
       // 各人物のタグ情報を取得
       const personsWithTags: PersonWithTags[] = [];
       for (const person of persons) {
-        const tags = await db.getAllAsync<Tag>(`
+        const [tagResults] = await db.executeSql(`
           SELECT t.* FROM tags t
           INNER JOIN persons_tags pt ON t.id = pt.tag_id
           WHERE pt.person_id = ?
           ORDER BY t.name ASC
         `, [person.id]);
+
+        const tags: Tag[] = [];
+        for (let i = 0; i < tagResults.rows.length; i++) {
+          tags.push(tagResults.rows.item(i) as Tag);
+        }
 
         personsWithTags.push({
           ...person,
@@ -296,13 +247,29 @@ export class PersonService {
   static async count(): Promise<number> {
     try {
       const db = await getDatabase();
-      const result = await db.getFirstAsync<{ count: number }>(
+      const [results] = await db.executeSql(
         'SELECT COUNT(*) as count FROM persons'
       );
 
-      return result?.count || 0;
+      if (results.rows.length > 0) {
+        return results.rows.item(0).count || 0;
+      }
+      return 0;
     } catch (error) {
       throw new Error(`人物数の取得に失敗しました: ${error}`);
+    }
+  }
+
+  /**
+   * 人物を削除する
+   * @param id 削除する人物のID
+   */
+  static async delete(id: string): Promise<void> {
+    try {
+      const db = await getDatabase();
+      await db.executeSql('DELETE FROM persons WHERE id = ?', [id]);
+    } catch (error) {
+      throw new Error(`人物の削除に失敗しました: ${error}`);
     }
   }
 }

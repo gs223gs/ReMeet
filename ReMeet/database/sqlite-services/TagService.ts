@@ -1,5 +1,5 @@
 /**
- * expo-sqlite用のタグ管理サービス
+ * react-native-sqlite-storage用のタグ管理サービス
  * SQLiteデータベースを使用したタグのCRUD操作
  */
 import { getDatabase, generateId } from '../sqlite-client';
@@ -13,7 +13,7 @@ export interface CreateTagData {
 }
 
 /**
- * expo-sqlite用のタグサービスクラス
+ * react-native-sqlite-storage用のタグサービスクラス
  */
 export class TagService {
   /**
@@ -34,48 +34,48 @@ export class TagService {
       }
 
       // 既存のタグをチェック
-      const existingTag = await db.getFirstAsync<Tag>(
+      const [existingResults] = await db.executeSql(
         'SELECT * FROM tags WHERE name = ?',
         [normalizedName]
       );
 
-      if (existingTag) {
-        return existingTag;
+      if (existingResults.rows.length > 0) {
+        return existingResults.rows.item(0) as Tag;
       }
 
       // 新しいタグを作成
       const tagId = generateId();
       
       try {
-        await db.runAsync(
+        await db.executeSql(
           'INSERT INTO tags (id, name) VALUES (?, ?)',
           [tagId, normalizedName]
         );
       } catch (insertError: any) {
         // UNIQUE制約エラーの場合は既存のタグを返す（競合状態対策）
         if (insertError.message && insertError.message.includes('UNIQUE constraint failed')) {
-          const existingTagAfterError = await db.getFirstAsync<Tag>(
+          const [fallbackResults] = await db.executeSql(
             'SELECT * FROM tags WHERE name = ?',
             [normalizedName]
           );
-          if (existingTagAfterError) {
-            return existingTagAfterError;
+          if (fallbackResults.rows.length > 0) {
+            return fallbackResults.rows.item(0) as Tag;
           }
         }
         throw insertError;
       }
 
       // 作成したタグを取得して返す
-      const newTag = await db.getFirstAsync<Tag>(
+      const [newResults] = await db.executeSql(
         'SELECT * FROM tags WHERE id = ?',
         [tagId]
       );
 
-      if (!newTag) {
+      if (newResults.rows.length === 0) {
         throw new Error('タグの作成に失敗しました');
       }
 
-      return newTag;
+      return newResults.rows.item(0) as Tag;
     } catch (error) {
       throw new Error(`タグの作成に失敗しました: ${error}`);
     }
@@ -109,12 +109,16 @@ export class TagService {
   static async findById(id: string): Promise<Tag | null> {
     try {
       const db = await getDatabase();
-      const tag = await db.getFirstAsync<Tag>(
+      const [results] = await db.executeSql(
         'SELECT * FROM tags WHERE id = ?',
         [id]
       );
 
-      return tag || null;
+      if (results.rows.length === 0) {
+        return null;
+      }
+
+      return results.rows.item(0) as Tag;
     } catch (error) {
       throw new Error(`タグの取得に失敗しました: ${error}`);
     }
@@ -128,12 +132,16 @@ export class TagService {
   static async findByName(name: string): Promise<Tag | null> {
     try {
       const db = await getDatabase();
-      const tag = await db.getFirstAsync<Tag>(
+      const [results] = await db.executeSql(
         'SELECT * FROM tags WHERE name = ?',
         [name]
       );
 
-      return tag || null;
+      if (results.rows.length === 0) {
+        return null;
+      }
+
+      return results.rows.item(0) as Tag;
     } catch (error) {
       throw new Error(`タグの検索に失敗しました: ${error}`);
     }
@@ -146,9 +154,14 @@ export class TagService {
   static async findAll(): Promise<Tag[]> {
     try {
       const db = await getDatabase();
-      const tags = await db.getAllAsync<Tag>(
+      const [results] = await db.executeSql(
         'SELECT * FROM tags ORDER BY name ASC'
       );
+
+      const tags: Tag[] = [];
+      for (let i = 0; i < results.rows.length; i++) {
+        tags.push(results.rows.item(i) as Tag);
+      }
 
       return tags;
     } catch (error) {
@@ -164,10 +177,15 @@ export class TagService {
   static async search(searchTerm: string): Promise<Tag[]> {
     try {
       const db = await getDatabase();
-      const tags = await db.getAllAsync<Tag>(
+      const [results] = await db.executeSql(
         'SELECT * FROM tags WHERE name LIKE ? ORDER BY name ASC',
         [`%${searchTerm}%`]
       );
+
+      const tags: Tag[] = [];
+      for (let i = 0; i < results.rows.length; i++) {
+        tags.push(results.rows.item(i) as Tag);
+      }
 
       return tags;
     } catch (error) {
@@ -182,35 +200,20 @@ export class TagService {
   static async findUsedTags(): Promise<Tag[]> {
     try {
       const db = await getDatabase();
-      const tags = await db.getAllAsync<Tag>(`
+      const [results] = await db.executeSql(`
         SELECT DISTINCT t.* FROM tags t
         INNER JOIN persons_tags pt ON t.id = pt.tag_id
         ORDER BY t.name ASC
       `);
 
+      const tags: Tag[] = [];
+      for (let i = 0; i < results.rows.length; i++) {
+        tags.push(results.rows.item(i) as Tag);
+      }
+
       return tags;
     } catch (error) {
       throw new Error(`使用済みタグの取得に失敗しました: ${error}`);
-    }
-  }
-
-  /**
-   * 使用されていないタグを取得する
-   * @returns 使用されていないタグデータの配列
-   */
-  static async findUnusedTags(): Promise<Tag[]> {
-    try {
-      const db = await getDatabase();
-      const tags = await db.getAllAsync<Tag>(`
-        SELECT t.* FROM tags t
-        LEFT JOIN persons_tags pt ON t.id = pt.tag_id
-        WHERE pt.tag_id IS NULL
-        ORDER BY t.name ASC
-      `);
-
-      return tags;
-    } catch (error) {
-      throw new Error(`未使用タグの取得に失敗しました: ${error}`);
     }
   }
 
@@ -221,29 +224,9 @@ export class TagService {
   static async delete(id: string): Promise<void> {
     try {
       const db = await getDatabase();
-      await db.runAsync('DELETE FROM tags WHERE id = ?', [id]);
+      await db.executeSql('DELETE FROM tags WHERE id = ?', [id]);
     } catch (error) {
       throw new Error(`タグの削除に失敗しました: ${error}`);
-    }
-  }
-
-  /**
-   * 使用されていないタグを一括削除する
-   * @returns 削除されたタグの数
-   */
-  static async deleteUnusedTags(): Promise<number> {
-    try {
-      const db = await getDatabase();
-      const result = await db.runAsync(`
-        DELETE FROM tags
-        WHERE id NOT IN (
-          SELECT DISTINCT tag_id FROM persons_tags
-        )
-      `);
-
-      return result.changes;
-    } catch (error) {
-      throw new Error(`未使用タグの削除に失敗しました: ${error}`);
     }
   }
 
@@ -254,11 +237,14 @@ export class TagService {
   static async count(): Promise<number> {
     try {
       const db = await getDatabase();
-      const result = await db.getFirstAsync<{ count: number }>(
+      const [results] = await db.executeSql(
         'SELECT COUNT(*) as count FROM tags'
       );
 
-      return result?.count || 0;
+      if (results.rows.length > 0) {
+        return results.rows.item(0).count || 0;
+      }
+      return 0;
     } catch (error) {
       throw new Error(`タグ数の取得に失敗しました: ${error}`);
     }
