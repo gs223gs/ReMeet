@@ -88,14 +88,14 @@ export const personRegistrationSchema = z.object({
     .max(500, 'メモは500文字以内で入力してください')
     .optional(),
   
-  // GitHub ID: 任意、英数字とハイフンのみ
+  // GitHub ID: 任意、GitHubのusername制約に準拠
   github_id: z
     .string()
-    .max(39, 'GitHub IDは39文字以内で入力してください') // GitHubのusername制限
     .regex(
-      /^[a-zA-Z0-9\-]*$/,
-      'GitHub IDは英数字とハイフンのみ使用できます'
+      /^[a-zA-Z0-9]([a-zA-Z0-9]|-(?!-))*[a-zA-Z0-9]$|^[a-zA-Z0-9]$/,
+      'GitHub IDは1-39文字で、英数字とハイフンのみ使用可能です。先頭末尾にハイフン、連続ハイフンは使用できません'
     )
+    .max(39, 'GitHub IDは39文字以内で入力してください')
     .optional(),
   
   // NFC ID: 任意、システムで自動設定されることもある

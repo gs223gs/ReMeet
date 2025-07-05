@@ -138,9 +138,96 @@ describe('PersonRegistrationForm', () => {
     
     // Assert（検証）
     await waitFor(() => {
-      expect(getByText('GitHub IDは英数字とハイフンのみ使用できます')).toBeTruthy();
+      expect(getByText('GitHub IDは1-39文字で、英数字とハイフンのみ使用可能です。先頭末尾にハイフン、連続ハイフンは使用できません')).toBeTruthy();
     });
     expect(mockOnSubmit).not.toHaveBeenCalled();
+  });
+
+  it('GitHub IDが先頭にハイフンを含む場合、エラーが表示される', async () => {
+    // Arrange（準備）
+    const invalidGitHubId = '-invalid'; // 先頭ハイフンは無効
+    
+    // Act（実行）
+    const { getByTestId, getByText } = render(
+      <PersonRegistrationForm onSubmit={mockOnSubmit} />
+    );
+    
+    fireEvent.changeText(getByTestId('name-input'), '山田太郎'); // 必須項目
+    fireEvent.changeText(getByTestId('github-id-input'), invalidGitHubId);
+    fireEvent.press(getByTestId('submit-button'));
+    
+    // Assert（検証）
+    await waitFor(() => {
+      expect(getByText('GitHub IDは1-39文字で、英数字とハイフンのみ使用可能です。先頭末尾にハイフン、連続ハイフンは使用できません')).toBeTruthy();
+    });
+    expect(mockOnSubmit).not.toHaveBeenCalled();
+  });
+
+  it('GitHub IDが末尾にハイフンを含む場合、エラーが表示される', async () => {
+    // Arrange（準備）
+    const invalidGitHubId = 'invalid-'; // 末尾ハイフンは無効
+    
+    // Act（実行）
+    const { getByTestId, getByText } = render(
+      <PersonRegistrationForm onSubmit={mockOnSubmit} />
+    );
+    
+    fireEvent.changeText(getByTestId('name-input'), '山田太郎'); // 必須項目
+    fireEvent.changeText(getByTestId('github-id-input'), invalidGitHubId);
+    fireEvent.press(getByTestId('submit-button'));
+    
+    // Assert（検証）
+    await waitFor(() => {
+      expect(getByText('GitHub IDは1-39文字で、英数字とハイフンのみ使用可能です。先頭末尾にハイフン、連続ハイフンは使用できません')).toBeTruthy();
+    });
+    expect(mockOnSubmit).not.toHaveBeenCalled();
+  });
+
+  it('GitHub IDが連続ハイフンを含む場合、エラーが表示される', async () => {
+    // Arrange（準備）
+    const invalidGitHubId = 'inval--id'; // 連続ハイフンは無効
+    
+    // Act（実行）
+    const { getByTestId, getByText } = render(
+      <PersonRegistrationForm onSubmit={mockOnSubmit} />
+    );
+    
+    fireEvent.changeText(getByTestId('name-input'), '山田太郎'); // 必須項目
+    fireEvent.changeText(getByTestId('github-id-input'), invalidGitHubId);
+    fireEvent.press(getByTestId('submit-button'));
+    
+    // Assert（検証）
+    await waitFor(() => {
+      expect(getByText('GitHub IDは1-39文字で、英数字とハイフンのみ使用可能です。先頭末尾にハイフン、連続ハイフンは使用できません')).toBeTruthy();
+    });
+    expect(mockOnSubmit).not.toHaveBeenCalled();
+  });
+
+  it('有効なGitHub IDの場合、エラーが表示されない', async () => {
+    // Arrange（準備）
+    const validGitHubIds = [
+      'user',
+      'user123',
+      'user-name',
+      'a', // 1文字
+      'a'.repeat(39), // 39文字
+    ];
+    
+    for (const validId of validGitHubIds) {
+      // Act（実行）
+      const { getByTestId, queryByText } = render(
+        <PersonRegistrationForm onSubmit={mockOnSubmit} />
+      );
+      
+      fireEvent.changeText(getByTestId('name-input'), '山田太郎'); // 必須項目
+      fireEvent.changeText(getByTestId('github-id-input'), validId);
+      fireEvent.press(getByTestId('submit-button'));
+      
+      // Assert（検証）
+      await waitFor(() => {
+        expect(queryByText('GitHub IDは1-39文字で、英数字とハイフンのみ使用可能です。先頭末尾にハイフン、連続ハイフンは使用できません')).toBeNull();
+      });
+    }
   });
 
   it('送信中は送信ボタンが無効になる', () => {
