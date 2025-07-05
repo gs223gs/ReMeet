@@ -40,3 +40,73 @@ export const userRegistrationSchema = z.object({
  * Zodスキーマから自動的に型を生成
  */
 export type UserRegistrationFormData = z.infer<typeof userRegistrationSchema>;
+
+/**
+ * 人物登録フォームのバリデーションスキーマ
+ * READMEのPersonスキーマに基づいた項目構成
+ */
+export const personRegistrationSchema = z.object({
+  // 名前: 必須、1文字以上100文字以下
+  name: z
+    .string()
+    .min(1, '名前は必須です')
+    .max(100, '名前は100文字以内で入力してください'),
+  
+  // ハンドル名（SNSなど）: 任意、100文字以内
+  handle: z
+    .string()
+    .max(100, 'ハンドル名は100文字以内で入力してください')
+    .optional(),
+  
+  // 会社名: 任意、100文字以内
+  company: z
+    .string()
+    .max(100, '会社名は100文字以内で入力してください')
+    .optional(),
+  
+  // 役職: 任意、100文字以内
+  position: z
+    .string()
+    .max(100, '役職は100文字以内で入力してください')
+    .optional(),
+  
+  // 自己紹介・説明: 任意、500文字以内
+  description: z
+    .string()
+    .max(500, '自己紹介は500文字以内で入力してください')
+    .optional(),
+  
+  // プロダクト名: 任意、100文字以内
+  product_name: z
+    .string()
+    .max(100, 'プロダクト名は100文字以内で入力してください')
+    .optional(),
+  
+  // メモ: 任意、500文字以内
+  memo: z
+    .string()
+    .max(500, 'メモは500文字以内で入力してください')
+    .optional(),
+  
+  // GitHub ID: 任意、GitHubのusername制約に準拠
+  github_id: z
+    .string()
+    .regex(
+      /^[a-zA-Z0-9]([a-zA-Z0-9]|-(?!-))*[a-zA-Z0-9]$|^[a-zA-Z0-9]$/,
+      'GitHub IDは1-39文字で、英数字とハイフンのみ使用可能です。先頭末尾にハイフン、連続ハイフンは使用できません'
+    )
+    .max(39, 'GitHub IDは39文字以内で入力してください')
+    .optional(),
+  
+  // NFC ID: 任意、システムで自動設定されることもある
+  nfc_id: z
+    .string()
+    .max(50, 'NFC IDは50文字以内で入力してください')
+    .optional(),
+});
+
+/**
+ * 人物登録フォームの型定義
+ * Zodスキーマから自動的に型を生成
+ */
+export type PersonRegistrationFormData = z.infer<typeof personRegistrationSchema>;
