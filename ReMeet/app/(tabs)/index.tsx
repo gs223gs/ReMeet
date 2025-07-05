@@ -1,9 +1,6 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet, Button } from 'react-native';
+import React from 'react';
+import { StyleSheet, Button, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
@@ -11,88 +8,131 @@ export default function HomeScreen() {
   const router = useRouter();
   
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">ユーザー登録</ThemedText>
-        <ThemedText style={{ marginBottom: 8 }}>
-          新しいユーザー登録フォームを試してみましょう
-        </ThemedText>
-        <Button
-          title="登録画面へ"
-          onPress={() => router.push('/register')}
-        />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">人物登録</ThemedText>
-        <ThemedText style={{ marginBottom: 8 }}>
-          出会った人の情報を登録・管理できます
-        </ThemedText>
-        <Button
-          title="人物登録画面へ"
-          onPress={() => router.push('/person-register')}
-        />
-      </ThemedView>
-    </ParallaxScrollView>
+    <ThemedView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.content}>
+        {/* ヘッダー */}
+        <ThemedView style={styles.header}>
+          <ThemedText type="title" style={styles.title}>ReMeet</ThemedText>
+          <ThemedText style={styles.subtitle}>
+            出会った人の情報を記録・管理するアプリ
+          </ThemedText>
+        </ThemedView>
+
+        {/* メイン機能 */}
+        <ThemedView style={styles.section}>
+          <ThemedText type="subtitle" style={styles.sectionTitle}>
+            メイン機能
+          </ThemedText>
+          
+          <ThemedView style={styles.card}>
+            <ThemedText type="defaultSemiBold" style={styles.cardTitle}>
+              人物登録
+            </ThemedText>
+            <ThemedText style={styles.cardDescription}>
+              出会った人の情報を登録・管理できます
+            </ThemedText>
+            <Button
+              title="人物登録画面へ"
+              onPress={() => router.push('/person-register')}
+            />
+          </ThemedView>
+        </ThemedView>
+
+        {/* 開発者向け機能 */}
+        <ThemedView style={styles.section}>
+          <ThemedText type="subtitle" style={styles.sectionTitle}>
+            開発者向け機能
+          </ThemedText>
+          
+          <ThemedView style={styles.card}>
+            <ThemedText type="defaultSemiBold" style={styles.cardTitle}>
+              ユーザー登録（テスト用）
+            </ThemedText>
+            <ThemedText style={styles.cardDescription}>
+              フォームバリデーションのテスト用画面
+            </ThemedText>
+            <Button
+              title="ユーザー登録画面へ"
+              onPress={() => router.push('/register')}
+            />
+          </ThemedView>
+        </ThemedView>
+
+        {/* 今後の予定 */}
+        <ThemedView style={styles.section}>
+          <ThemedText type="subtitle" style={styles.sectionTitle}>
+            今後の実装予定
+          </ThemedText>
+          
+          <ThemedView style={styles.featureList}>
+            <ThemedText style={styles.featureItem}>
+              • NFC カード連携機能
+            </ThemedText>
+            <ThemedText style={styles.featureItem}>
+              • 人物検索・フィルタリング
+            </ThemedText>
+            <ThemedText style={styles.featureItem}>
+              • タグ管理機能
+            </ThemedText>
+            <ThemedText style={styles.featureItem}>
+              • GitHub連携・ステータス表示
+            </ThemedText>
+            <ThemedText style={styles.featureItem}>
+              • 関係グラフ表示（Skia Canvas）
+            </ThemedText>
+          </ThemedView>
+        </ThemedView>
+      </ScrollView>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
   },
-  stepContainer: {
-    gap: 8,
+  content: {
+    padding: 20,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 32,
+    paddingTop: 20,
+  },
+  title: {
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  subtitle: {
+    textAlign: 'center',
+    opacity: 0.7,
+    fontSize: 16,
+  },
+  section: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    marginBottom: 16,
+  },
+  card: {
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    marginBottom: 16,
+  },
+  cardTitle: {
+    marginBottom: 8,
+  },
+  cardDescription: {
+    marginBottom: 12,
+    opacity: 0.7,
+    lineHeight: 20,
+  },
+  featureList: {
+    paddingLeft: 8,
+  },
+  featureItem: {
+    marginBottom: 8,
+    lineHeight: 20,
+    opacity: 0.8,
   },
 });
