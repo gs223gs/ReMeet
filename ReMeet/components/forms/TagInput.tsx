@@ -28,7 +28,9 @@ export function TagInput({
   suggestions = []
 }: TagInputProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const [isSelectingSuggestion, setIsSelectingSuggestion] = useState(false);
+  const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inputRef = React.useRef<TextInput>(null);
   const textColor = useThemeColor({}, 'text');
   const defaultBorderColor = useThemeColor({}, 'tabIconDefault');
   const backgroundColor = useThemeColor({}, 'background');
@@ -63,6 +65,8 @@ export function TagInput({
   })();
 
   const handleSuggestionPress = (suggestion: string) => {
+    setIsSelectingSuggestion(true);
+    
     // タイムアウトをクリア
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -71,8 +75,16 @@ export function TagInput({
     
     const tags = value.split(',').map(tag => tag.trim());
     tags[tags.length - 1] = suggestion;
-    onChangeText(tags.join(', '));
+    const newValue = tags.join(', ');
+    
+    onChangeText(newValue);
     setShowSuggestions(false);
+    
+    // フォーカスを維持
+    setTimeout(() => {
+      setIsSelectingSuggestion(false);
+      inputRef.current?.focus();
+    }, 50);
   };
 
   const handleChangeText = (text: string) => {
@@ -85,6 +97,11 @@ export function TagInput({
   };
 
   const handleBlur = () => {
+    // サジェスト選択中はblurを無視
+    if (isSelectingSuggestion) {
+      return;
+    }
+    
     // 少し遅延させてサジェストのタップを可能にする
     timeoutRef.current = setTimeout(() => {
       setShowSuggestions(false);
@@ -109,6 +126,7 @@ export function TagInput({
       </Text>
       
       <TextInput
+        ref={inputRef}
         style={[
           styles.input,
           {
@@ -146,6 +164,8 @@ export function TagInput({
                 pressed && styles.suggestionItemPressed
               ]}
               onPress={() => handleSuggestionPress(suggestion)}
+              onPressIn={() => setIsSelectingSuggestion(true)}
+              onPressOut={() => {}}
               testID={`${testID}-suggestion-${index}`}
             >
               <Text style={[styles.suggestionText, { color: textColor }]}>
@@ -163,6 +183,7 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: 16,
     position: 'relative',
+    overflow: 'visible',
   },
   label: {
     fontSize: 16,
@@ -191,13 +212,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
     maxHeight: 200,
-    zIndex: 1000,
+    zIndex: 9999,
+    elevation: 10, // Android用
+    shadowColor: '#000', // iOS用
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   suggestionItem: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
+    minHeight: 48, // 十分なタップエリアを確保
   },
   suggestionText: {
     fontSize: 14,

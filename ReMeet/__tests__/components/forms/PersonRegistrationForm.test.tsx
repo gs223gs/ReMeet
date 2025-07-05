@@ -42,7 +42,7 @@ describe('PersonRegistrationForm', () => {
     expect(getByTestId('description-input')).toBeTruthy();
     expect(getByTestId('product-name-input')).toBeTruthy();
     expect(getByTestId('github-id-input')).toBeTruthy();
-    expect(getByTestId('tags-input')).toBeTruthy();
+    expect(getByTestId('tags-selector')).toBeTruthy();
     expect(getByTestId('nfc-id-input')).toBeTruthy();
     expect(getByTestId('memo-input')).toBeTruthy();
   });
@@ -57,7 +57,7 @@ describe('PersonRegistrationForm', () => {
       description: 'React開発者です',
       product_name: 'テストアプリ',
       github_id: 'yamada-taro',
-      tags: 'React, TypeScript',
+      tags: '', // TagSelectorは別途管理されるため空文字列
       nfc_id: 'nfc123',
       memo: 'テストメモ',
     };
@@ -75,7 +75,7 @@ describe('PersonRegistrationForm', () => {
     fireEvent.changeText(getByTestId('description-input'), validData.description);
     fireEvent.changeText(getByTestId('product-name-input'), validData.product_name);
     fireEvent.changeText(getByTestId('github-id-input'), validData.github_id);
-    fireEvent.changeText(getByTestId('tags-input'), validData.tags);
+    // タグは新しいTagSelectorで選択される（この部分は別途テスト）
     fireEvent.changeText(getByTestId('nfc-id-input'), validData.nfc_id);
     fireEvent.changeText(getByTestId('memo-input'), validData.memo);
     
@@ -269,6 +269,6 @@ describe('PersonRegistrationForm', () => {
     expect(getByTestId('name-input').props.value).toBe(initialData.name);
     expect(getByTestId('company-input').props.value).toBe(initialData.company);
     expect(getByTestId('github-id-input').props.value).toBe(initialData.github_id);
-    expect(getByTestId('tags-input').props.value).toBe(initialData.tags);
+    // タグは新しいTagSelectorで管理される
   });
 });

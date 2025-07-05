@@ -10,7 +10,7 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FormInput } from './FormInput';
-import { TagInput } from './TagInput';
+import { TagSelector } from './TagSelector';
 import { 
   personRegistrationSchema, 
   PersonRegistrationFormData 
@@ -38,10 +38,40 @@ export function PersonRegistrationForm({
   initialData,
   tagSuggestions = []
 }: PersonRegistrationFormProps) {
+  // タグの使用履歴を管理（実際のアプリでは永続化）
+  const [tagUsageHistory, setTagUsageHistory] = React.useState<string[]>(tagSuggestions);
+  
+  // 初期タグを配列に変換
+  const initialTags = initialData?.tags 
+    ? initialData.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+    : [];
+    
+  const [selectedTags, setSelectedTags] = React.useState<string[]>(initialTags);
+  
+  // タグ変更時の処理
+  const handleTagsChange = (newTags: string[]) => {
+    setSelectedTags(newTags);
+    
+    // 使用履歴を更新（使用順で並べ替え）
+    const updatedHistory = [...tagUsageHistory];
+    newTags.forEach(tag => {
+      const existingIndex = updatedHistory.indexOf(tag);
+      if (existingIndex !== -1) {
+        // 既存のタグを先頭に移動
+        updatedHistory.splice(existingIndex, 1);
+      }
+      updatedHistory.unshift(tag);
+    });
+    setTagUsageHistory(updatedHistory);
+    
+    // react-hook-formの値を更新
+    setValue('tags', newTags.join(', '));
+  };
   // react-hook-formの設定
   const { 
     control, 
     handleSubmit, 
+    setValue,
     formState: { errors } 
   } = useForm<PersonRegistrationFormData>({
     resolver: zodResolver(personRegistrationSchema),
@@ -196,22 +226,14 @@ export function PersonRegistrationForm({
           )}
         />
 
-        {/* タグ入力フィールド */}
-        <Controller
-          control={control}
-          name="tags"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <TagInput
-              label="タグ"
-              placeholder="フロントエンド, React, TypeScript"
-              value={value || ''}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              error={errors.tags?.message}
-              suggestions={tagSuggestions}
-              testID="tags-input"
-            />
-          )}
+        {/* タグ選択フィールド */}
+        <TagSelector
+          label="タグ"
+          selectedTags={selectedTags}
+          availableTags={tagUsageHistory}
+          onTagsChange={handleTagsChange}
+          error={errors.tags?.message}
+          testID="tags-selector"
         />
 
         {/* NFC ID入力フィールド */}
