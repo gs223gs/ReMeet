@@ -64,6 +64,16 @@ export default function HomeScreen() {
           onPress={() => router.push('/register')}
         />
       </ThemedView>
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">人物登録</ThemedText>
+        <ThemedText style={{ marginBottom: 8 }}>
+          出会った人の情報を登録・管理できます
+        </ThemedText>
+        <Button
+          title="人物登録画面へ"
+          onPress={() => router.push('/person-register')}
+        />
+      </ThemedView>
     </ParallaxScrollView>
   );
 }
