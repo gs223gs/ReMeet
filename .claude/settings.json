@@ -1,0 +1,41 @@
+{
+  "toolChoice": {
+    "allowedTools": {
+      "bash": {
+        "enabled": true,
+        "requireApproval": {
+          "commands": {
+            "git": {
+              "rm": true,
+              "reset": {
+                "--hard": true
+              },
+              "clean": true,
+              "push": {
+                "--force": true,
+                "-f": true
+              }
+            },
+            "rm": {
+              "-rf": true,
+              "-r": true
+            },
+            "database": {
+              "drop": true,
+              "delete": true,
+              "truncate": true
+            }
+          },
+          "patterns": [
+            "*DROP TABLE*",
+            "*DROP DATABASE*",
+            "*DELETE FROM*",
+            "*TRUNCATE*",
+            "rm -rf /*",
+            "git push --force*"
+          ]
+        }
+      }
+    }
+  }
+}
