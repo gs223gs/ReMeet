@@ -91,13 +91,36 @@ export const personRegistrationSchema = z.object({
   // GitHub ID: 任意、GitHubのusername制約に準拠
   github_id: z
     .string()
-    .regex(
-      /^[a-zA-Z0-9]([a-zA-Z0-9]|-(?!-))*[a-zA-Z0-9]$|^[a-zA-Z0-9]$/,
-      'GitHub IDは1-39文字で、英数字とハイフンのみ使用可能です。先頭末尾にハイフン、連続ハイフンは使用できません'
+    .refine(
+      (value) => {
+        // 空文字列の場合はバリデーションをスキップ
+        if (!value || value.trim() === '') return true;
+        // GitHub IDのフォーマットチェック
+        return /^[a-zA-Z0-9]([a-zA-Z0-9]|-(?!-))*[a-zA-Z0-9]$|^[a-zA-Z0-9]$/.test(value);
+      },
+      {
+        message: 'GitHub IDは1-39文字で、英数字とハイフンのみ使用可能です。先頭末尾にハイフン、連続ハイフンは使用できません'
+      }
     )
-    .max(39, 'GitHub IDは39文字以内で入力してください')
+    .refine(
+      (value) => {
+        // 空文字列の場合はバリデーションをスキップ
+        if (!value || value.trim() === '') return true;
+        // 長さチェック
+        return value.length <= 39;
+      },
+      {
+        message: 'GitHub IDは39文字以内で入力してください'
+      }
+    )
     .optional(),
   
+  // タグ: 任意、カンマ区切りで複数指定可能
+  tags: z
+    .string()
+    .max(200, 'タグは200文字以内で入力してください')
+    .optional(),
+
   // NFC ID: 任意、システムで自動設定されることもある
   nfc_id: z
     .string()

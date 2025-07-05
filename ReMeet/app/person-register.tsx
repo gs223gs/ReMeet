@@ -66,6 +66,7 @@ export default function PersonRegisterScreen() {
       <PersonRegistrationForm 
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
+        tagSuggestions={['フロントエンド', 'バックエンド', 'React', 'TypeScript', 'JavaScript', 'Python', 'Node.js', 'デザイナー', 'エンジニア', 'プロダクトマネージャー']}
       />
     </ThemedView>
   );

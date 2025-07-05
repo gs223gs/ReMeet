@@ -10,6 +10,7 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FormInput } from './FormInput';
+import { TagInput } from './TagInput';
 import { 
   personRegistrationSchema, 
   PersonRegistrationFormData 
@@ -22,6 +23,8 @@ export interface PersonRegistrationFormProps {
   isSubmitting?: boolean;
   /** 初期値（編集時など） */
   initialData?: Partial<PersonRegistrationFormData>;
+  /** タグのサジェスト一覧 */
+  tagSuggestions?: string[];
 }
 
 /**
@@ -32,7 +35,8 @@ export interface PersonRegistrationFormProps {
 export function PersonRegistrationForm({ 
   onSubmit, 
   isSubmitting = false,
-  initialData 
+  initialData,
+  tagSuggestions = []
 }: PersonRegistrationFormProps) {
   // react-hook-formの設定
   const { 
@@ -50,6 +54,7 @@ export function PersonRegistrationForm({
       product_name: initialData?.product_name || '',
       memo: initialData?.memo || '',
       github_id: initialData?.github_id || '',
+      tags: initialData?.tags || '',
       nfc_id: initialData?.nfc_id || '',
     },
   });
@@ -186,6 +191,25 @@ export function PersonRegistrationForm({
               error={errors.github_id?.message}
               autoCapitalize="none"
               testID="github-id-input"
+              required={false}
+            />
+          )}
+        />
+
+        {/* タグ入力フィールド */}
+        <Controller
+          control={control}
+          name="tags"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TagInput
+              label="タグ"
+              placeholder="フロントエンド, React, TypeScript"
+              value={value || ''}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              error={errors.tags?.message}
+              suggestions={tagSuggestions}
+              testID="tags-input"
             />
           )}
         />

@@ -42,6 +42,7 @@ describe('PersonRegistrationForm', () => {
     expect(getByTestId('description-input')).toBeTruthy();
     expect(getByTestId('product-name-input')).toBeTruthy();
     expect(getByTestId('github-id-input')).toBeTruthy();
+    expect(getByTestId('tags-input')).toBeTruthy();
     expect(getByTestId('nfc-id-input')).toBeTruthy();
     expect(getByTestId('memo-input')).toBeTruthy();
   });
@@ -56,6 +57,7 @@ describe('PersonRegistrationForm', () => {
       description: 'React開発者です',
       product_name: 'テストアプリ',
       github_id: 'yamada-taro',
+      tags: 'React, TypeScript',
       nfc_id: 'nfc123',
       memo: 'テストメモ',
     };
@@ -73,6 +75,7 @@ describe('PersonRegistrationForm', () => {
     fireEvent.changeText(getByTestId('description-input'), validData.description);
     fireEvent.changeText(getByTestId('product-name-input'), validData.product_name);
     fireEvent.changeText(getByTestId('github-id-input'), validData.github_id);
+    fireEvent.changeText(getByTestId('tags-input'), validData.tags);
     fireEvent.changeText(getByTestId('nfc-id-input'), validData.nfc_id);
     fireEvent.changeText(getByTestId('memo-input'), validData.memo);
     
@@ -251,6 +254,7 @@ describe('PersonRegistrationForm', () => {
       name: '初期名前',
       company: '初期会社',
       github_id: 'initial-user',
+      tags: 'JavaScript, Node.js',
     };
     
     // Act（実行）
@@ -265,5 +269,6 @@ describe('PersonRegistrationForm', () => {
     expect(getByTestId('name-input').props.value).toBe(initialData.name);
     expect(getByTestId('company-input').props.value).toBe(initialData.company);
     expect(getByTestId('github-id-input').props.value).toBe(initialData.github_id);
+    expect(getByTestId('tags-input').props.value).toBe(initialData.tags);
   });
 });
