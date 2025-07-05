@@ -116,9 +116,9 @@ export function TagInput({
       )}
 
       {/* サジェスト */}
-      {showSuggestions && getFilteredSuggestions().length > 0 && (
+      {showSuggestions && filteredSuggestions.length > 0 && (
         <View style={[styles.suggestionsContainer, { backgroundColor }]}>
-          {getFilteredSuggestions().map((suggestion, index) => (
+          {filteredSuggestions.map((suggestion, index) => (
             <TouchableOpacity
               key={index}
               style={[styles.suggestionItem, { borderColor }]}
