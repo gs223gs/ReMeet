@@ -3,7 +3,7 @@ import { render, fireEvent } from '@testing-library/react-native';
 import { TagInput } from '../../../components/forms/TagInput';
 
 // useThemeColorフックをモック
-jest.mock('../../../hooks/useThemeColor', () => ({
+jest.mock('@/hooks/useThemeColor', () => ({
   useThemeColor: jest.fn(() => '#000000'),
 }));
 
