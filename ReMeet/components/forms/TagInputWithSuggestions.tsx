@@ -39,20 +39,16 @@ export function TagInputWithSuggestions({
   // 現在のタグ配列
   const currentTags = value || [];
 
-  // 新規タグ追加処理
+  // 新規タグ追加処理（追加ボタン方式）
   const handleAddTag = () => {
     const trimmedText = inputText.trim();
     if (trimmedText && !currentTags.includes(trimmedText)) {
+      // ログ出力（後で実際のロジックに置き換える）
+      console.log('新規タグを追加:', trimmedText);
+      
       const newTags = [...currentTags, trimmedText];
       onChangeText(newTags);
       setInputText('');
-    }
-  };
-
-  // エンターキー処理
-  const handleKeyPress = (e: any) => {
-    if (e.nativeEvent.key === 'Enter') {
-      handleAddTag();
     }
   };
 
@@ -81,25 +77,42 @@ export function TagInputWithSuggestions({
         {label}
       </Text>
 
-      {/* テキスト入力フィールド */}
-      <TextInput
-        style={[
-          styles.input,
-          {
-            color: textColor,
-            borderColor,
-            backgroundColor,
-          }
-        ]}
-        placeholder={placeholder || "タグを入力してEnterキーを押してください"}
-        placeholderTextColor={defaultBorderColor}
-        value={inputText}
-        onChangeText={setInputText}
-        onKeyPress={handleKeyPress}
-        onBlur={onBlur}
-        autoCapitalize="none"
-        testID={testID}
-      />
+      {/* テキスト入力フィールドと追加ボタン */}
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={[
+            styles.input,
+            {
+              color: textColor,
+              borderColor,
+              backgroundColor,
+            }
+          ]}
+          placeholder={placeholder || "タグを入力してください"}
+          placeholderTextColor={defaultBorderColor}
+          value={inputText}
+          onChangeText={setInputText}
+          onBlur={onBlur}
+          autoCapitalize="none"
+          testID={testID}
+        />
+        <Pressable
+          style={[
+            styles.addButton,
+            {
+              backgroundColor: primaryColor,
+              opacity: inputText.trim() ? 1 : 0.5,
+            }
+          ]}
+          onPress={handleAddTag}
+          disabled={!inputText.trim()}
+          testID={`${testID}-add-button`}
+        >
+          <Text style={[styles.addButtonText, { color: backgroundColor }]}>
+            追加
+          </Text>
+        </Pressable>
+      </View>
 
       {/* 既存タグ選択トグルボタン */}
       {availableTags.length > 0 && (
@@ -205,13 +218,32 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginBottom: 8,
   },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   input: {
+    flex: 1,
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
     minHeight: 48,
+  },
+  addButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    minHeight: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 60,
+  },
+  addButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   toggleButton: {
     marginTop: 8,

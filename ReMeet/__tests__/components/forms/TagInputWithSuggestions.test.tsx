@@ -50,7 +50,7 @@ describe('TagInputWithSuggestions', () => {
     expect(getByTestId('tag-input').props.value).toBe('新規タグ');
   });
 
-  it('Enterキーでタグが追加される', () => {
+  it('追加ボタンでタグが追加される', () => {
     // Arrange（準備）
     // Act（実行）
     const { getByTestId } = render(
@@ -59,8 +59,8 @@ describe('TagInputWithSuggestions', () => {
     
     // テキストを入力
     fireEvent.changeText(getByTestId('tag-input'), '新規タグ');
-    // Enterキーを押下
-    fireEvent(getByTestId('tag-input'), 'onKeyPress', { nativeEvent: { key: 'Enter' } });
+    // 追加ボタンを押下
+    fireEvent.press(getByTestId('tag-input-add-button'));
 
     // Assert（検証）
     expect(mockOnChangeText).toHaveBeenCalledWith(['新規タグ']);
@@ -80,7 +80,7 @@ describe('TagInputWithSuggestions', () => {
     
     // 既存のタグと同じ名前を入力
     fireEvent.changeText(getByTestId('tag-input'), 'React');
-    fireEvent(getByTestId('tag-input'), 'onKeyPress', { nativeEvent: { key: 'Enter' } });
+    fireEvent.press(getByTestId('tag-input-add-button'));
 
     // Assert（検証）
     expect(mockOnChangeText).not.toHaveBeenCalled();
@@ -248,7 +248,7 @@ describe('TagInputWithSuggestions', () => {
     
     // 空白のみを入力
     fireEvent.changeText(getByTestId('tag-input'), '   ');
-    fireEvent(getByTestId('tag-input'), 'onKeyPress', { nativeEvent: { key: 'Enter' } });
+    fireEvent.press(getByTestId('tag-input-add-button'));
 
     // Assert（検証）
     expect(mockOnChangeText).not.toHaveBeenCalled();
@@ -261,11 +261,43 @@ describe('TagInputWithSuggestions', () => {
       <TagInputWithSuggestions {...defaultProps} />
     );
     
-    // テキストを入力してEnterキーを押下
+    // テキストを入力して追加ボタンを押下
     fireEvent.changeText(getByTestId('tag-input'), '新規タグ');
-    fireEvent(getByTestId('tag-input'), 'onKeyPress', { nativeEvent: { key: 'Enter' } });
+    fireEvent.press(getByTestId('tag-input-add-button'));
 
     // Assert（検証）
     expect(getByTestId('tag-input').props.value).toBe('');
+  });
+
+  it('追加ボタンは入力がない場合は無効化される', () => {
+    // Arrange（準備）
+    // Act（実行）
+    const { getByTestId } = render(
+      <TagInputWithSuggestions {...defaultProps} />
+    );
+    
+    // 空の入力状態で追加ボタンを押してもタグが追加されない
+    fireEvent.press(getByTestId('tag-input-add-button'));
+    
+    // Assert（検証）
+    // 初期状態では追加ボタンが無効化されているためタグは追加されない
+    expect(mockOnChangeText).not.toHaveBeenCalled();
+  });
+
+  it('追加ボタンは入力がある場合は有効化される', () => {
+    // Arrange（準備）
+    // Act（実行）
+    const { getByTestId } = render(
+      <TagInputWithSuggestions {...defaultProps} />
+    );
+    
+    // テキストを入力
+    fireEvent.changeText(getByTestId('tag-input'), '新規タグ');
+    // 追加ボタンを押す
+    fireEvent.press(getByTestId('tag-input-add-button'));
+
+    // Assert（検証）
+    // 入力後は追加ボタンが有効化されているためタグが追加される
+    expect(mockOnChangeText).toHaveBeenCalledWith(['新規タグ']);
   });
 });
