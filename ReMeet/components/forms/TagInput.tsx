@@ -35,7 +35,7 @@ export function TagInput({
   const borderColor = error ? '#FF6B6B' : defaultBorderColor;
 
   // 入力中のタグに基づいてサジェストをフィルタリング
-  const getFilteredSuggestions = () => {
+  const filteredSuggestions = (() => {
     if (!showSuggestions) return [];
     
     // 値が空の場合は全サジェストを表示
@@ -59,7 +59,7 @@ export function TagInput({
         !currentTags.slice(0, -1).includes(suggestion.toLowerCase())
       )
       .slice(0, 5);
-  };
+  })();
 
   const handleSuggestionPress = (suggestion: string) => {
     const tags = value.split(',').map(tag => tag.trim());
