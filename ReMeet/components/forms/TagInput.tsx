@@ -29,8 +29,10 @@ export function TagInput({
 }: TagInputProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const textColor = useThemeColor({}, 'text');
-  const borderColor = error ? '#FF6B6B' : useThemeColor({}, 'tabIconDefault');
+  const defaultBorderColor = useThemeColor({}, 'tabIconDefault');
   const backgroundColor = useThemeColor({}, 'background');
+  
+  const borderColor = error ? '#FF6B6B' : defaultBorderColor;
 
   // 入力中のタグに基づいてサジェストをフィルタリング
   const getFilteredSuggestions = () => {
