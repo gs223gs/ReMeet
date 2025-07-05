@@ -119,8 +119,8 @@ describe('TagInput', () => {
     fireEvent(getByTestId('tag-input'), 'focus');
 
     // Assert（検証）
-    expect(getByTestId('tag-input-suggestion-0')).toBeTruthy();
-    expect(getByTestId('tag-input-suggestion-1')).toBeTruthy();
+    expect(getByTestId('tag-input-suggestion-React')).toBeTruthy();
+    expect(getByTestId('tag-input-suggestion-ReactNative')).toBeTruthy();
   });
 
   it('サジェストをタップすると値が更新される', () => {
@@ -136,7 +136,7 @@ describe('TagInput', () => {
     // Act（実行）
     const { getByTestId } = render(<TagInput {...props} />);
     fireEvent(getByTestId('tag-input'), 'focus');
-    fireEvent.press(getByTestId('tag-input-suggestion-0'));
+    fireEvent.press(getByTestId('tag-input-suggestion-React'));
 
     // Assert（検証）
     expect(mockOnChangeText).toHaveBeenCalledWith('React');
@@ -160,7 +160,7 @@ describe('TagInput', () => {
     // Reactは既に入力済みなのでサジェストに表示されない
     expect(queryByText('React')).toBeNull();
     // TypeScriptは部分マッチするのでサジェストに表示される
-    expect(getByTestId('tag-input-suggestion-0')).toBeTruthy();
+    expect(getByTestId('tag-input-suggestion-TypeScript')).toBeTruthy();
   });
 
   it('複数タグの最大数テスト', () => {
@@ -180,8 +180,8 @@ describe('TagInput', () => {
 
     // Assert（検証）
     // 最大5個までしか表示されない
-    expect(queryByTestId('tag-input-suggestion-0')).toBeTruthy();
-    expect(queryByTestId('tag-input-suggestion-4')).toBeTruthy();
-    expect(queryByTestId('tag-input-suggestion-5')).toBeNull();
+    expect(queryByTestId('tag-input-suggestion-asuggest0')).toBeTruthy();
+    expect(queryByTestId('tag-input-suggestion-asuggest4')).toBeTruthy();
+    expect(queryByTestId('tag-input-suggestion-asuggest5')).toBeNull();
   });
 });

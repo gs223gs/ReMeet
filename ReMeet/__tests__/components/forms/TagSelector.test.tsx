@@ -36,7 +36,7 @@ describe('TagSelector', () => {
     // Arrange（準備）
     // Act（実行）
     const { getByTestId } = render(<TagSelector {...defaultProps} />);
-    fireEvent.press(getByTestId('tag-selector-tag-0')); // Reactをタップ
+    fireEvent.press(getByTestId('tag-selector-tag-React')); // Reactをタップ
 
     // Assert（検証）
     expect(mockOnTagsChange).toHaveBeenCalledWith(['React']);
@@ -51,7 +51,7 @@ describe('TagSelector', () => {
 
     // Act（実行）
     const { getByTestId } = render(<TagSelector {...props} />);
-    fireEvent.press(getByTestId('tag-selector-tag-0')); // Reactをタップ
+    fireEvent.press(getByTestId('tag-selector-tag-React')); // Reactをタップ
 
     // Assert（検証）
     expect(mockOnTagsChange).toHaveBeenCalledWith([]);
@@ -66,7 +66,7 @@ describe('TagSelector', () => {
 
     // Act（実行）
     const { getByTestId } = render(<TagSelector {...props} />);
-    fireEvent.press(getByTestId('tag-selector-tag-1')); // TypeScriptをタップ
+    fireEvent.press(getByTestId('tag-selector-tag-TypeScript')); // TypeScriptをタップ
 
     // Assert（検証）
     expect(mockOnTagsChange).toHaveBeenCalledWith(['React', 'TypeScript']);

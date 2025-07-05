@@ -61,7 +61,7 @@ export function TagSelector({
         style={styles.tagsScrollView}
         contentContainerStyle={styles.tagsContainer}
       >
-        {availableTags.map((tag, index) => {
+        {availableTags.map((tag) => {
           const isSelected = selectedTags.includes(tag);
           return (
             <Pressable
@@ -75,7 +75,7 @@ export function TagSelector({
                 pressed && styles.tagChipPressed,
               ]}
               onPress={() => handleTagToggle(tag)}
-              testID={`${testID}-tag-${index}`}
+              testID={`${testID}-tag-${tag}`}
             >
               <Text
                 style={[

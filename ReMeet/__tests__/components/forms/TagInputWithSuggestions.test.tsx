@@ -121,7 +121,7 @@ describe('TagInputWithSuggestions', () => {
     // メニューを開く
     fireEvent.press(getByTestId('tag-input-toggle'));
     // タグを選択
-    fireEvent.press(getByTestId('tag-input-existing-tag-0'));
+    fireEvent.press(getByTestId('tag-input-existing-tag-React'));
 
     // Assert（検証）
     expect(mockOnChangeText).toHaveBeenCalledWith(['React']);
@@ -142,7 +142,7 @@ describe('TagInputWithSuggestions', () => {
     // メニューを開く
     fireEvent.press(getByTestId('tag-input-toggle'));
     // TypeScriptを追加選択
-    fireEvent.press(getByTestId('tag-input-existing-tag-1'));
+    fireEvent.press(getByTestId('tag-input-existing-tag-TypeScript'));
 
     // Assert（検証）
     expect(mockOnChangeText).toHaveBeenCalledWith(['React', 'TypeScript']);
@@ -163,7 +163,7 @@ describe('TagInputWithSuggestions', () => {
     // メニューを開く
     fireEvent.press(getByTestId('tag-input-toggle'));
     // Reactを削除
-    fireEvent.press(getByTestId('tag-input-existing-tag-0'));
+    fireEvent.press(getByTestId('tag-input-existing-tag-React'));
 
     // Assert（検証）
     expect(mockOnChangeText).toHaveBeenCalledWith(['TypeScript']);
@@ -200,7 +200,7 @@ describe('TagInputWithSuggestions', () => {
     );
     
     // Reactのバツボタンをタップ
-    fireEvent.press(getByTestId('tag-input-remove-tag-0'));
+    fireEvent.press(getByTestId('tag-input-remove-tag-React'));
 
     // Assert（検証）
     expect(mockOnChangeText).toHaveBeenCalledWith(['TypeScript']);

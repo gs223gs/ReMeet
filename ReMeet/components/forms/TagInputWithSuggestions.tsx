@@ -135,7 +135,7 @@ export function TagInputWithSuggestions({
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.tagsScrollContent}
           >
-            {availableTags.map((tag, index) => {
+            {availableTags.map((tag) => {
               const isSelected = currentTags.includes(tag);
               return (
                 <Pressable
@@ -149,7 +149,7 @@ export function TagInputWithSuggestions({
                     pressed && styles.tagChipPressed,
                   ]}
                   onPress={() => handleExistingTagPress(tag)}
-                  testID={`${testID}-existing-tag-${index}`}
+                  testID={`${testID}-existing-tag-${tag}`}
                 >
                   <Text
                     style={[
@@ -175,11 +175,11 @@ export function TagInputWithSuggestions({
             選択済みタグ:
           </Text>
           <View style={styles.selectedTagsList}>
-            {currentTags.map((tag, index) => (
+            {currentTags.map((tag) => (
               <View
                 key={tag}
                 style={[styles.selectedTagChip, { backgroundColor: primaryColor }]}
-                testID={`${testID}-selected-tag-${index}`}
+                testID={`${testID}-selected-tag-${tag}`}
               >
                 <Text style={[styles.selectedTagText, { color: backgroundColor }]}>
                   {tag}
@@ -187,7 +187,7 @@ export function TagInputWithSuggestions({
                 <Pressable
                   style={styles.removeTagButton}
                   onPress={() => handleRemoveTag(tag)}
-                  testID={`${testID}-remove-tag-${index}`}
+                  testID={`${testID}-remove-tag-${tag}`}
                 >
                   <Text style={[styles.removeTagButtonText, { color: backgroundColor }]}>
                     ×

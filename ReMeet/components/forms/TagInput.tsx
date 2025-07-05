@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, StyleSheet, Pressable } from 'react-native';
 import { useThemeColor } from '@/hooks/useThemeColor';
 
@@ -110,14 +110,7 @@ export function TagInput({
     onBlur?.();
   };
 
-  // クリーンアップ
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
+  // タイムアウトのクリーンアップは自動で行われるため、useEffectは不要
 
   return (
     <View style={styles.container}>
@@ -155,9 +148,9 @@ export function TagInput({
       {/* サジェスト */}
       {showSuggestions && filteredSuggestions.length > 0 && (
         <View style={[styles.suggestionsContainer, { backgroundColor }]}>
-          {filteredSuggestions.map((suggestion, index) => (
+          {filteredSuggestions.map((suggestion) => (
             <Pressable
-              key={index}
+              key={suggestion}
               style={({ pressed }) => [
                 styles.suggestionItem, 
                 { borderColor },
@@ -166,7 +159,7 @@ export function TagInput({
               onPress={() => handleSuggestionPress(suggestion)}
               onPressIn={() => setIsSelectingSuggestion(true)}
               onPressOut={() => {}}
-              testID={`${testID}-suggestion-${index}`}
+              testID={`${testID}-suggestion-${suggestion}`}
             >
               <Text style={[styles.suggestionText, { color: textColor }]}>
                 {suggestion}
