@@ -5,6 +5,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { PersonRegistrationForm } from '@/components/forms/PersonRegistrationForm';
 import { PersonRegistrationFormData } from '@/types/forms';
+import { PersonService, TagService } from '@/database/sqlite-services';
 
 /**
  * 人物登録画面
@@ -13,36 +14,95 @@ import { PersonRegistrationFormData } from '@/types/forms';
 export default function PersonRegisterScreen() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [availableTags, setAvailableTags] = useState<string[]>([
-    'フロントエンド', 'バックエンド', 'React', 'TypeScript', 'JavaScript', 
-    'Python', 'Node.js', 'デザイナー', 'エンジニア', 'プロダクトマネージャー'
-  ]);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [isLoadingTags, setIsLoadingTags] = useState(true);
+
+  /**
+   * 画面初期化時に既存タグを読み込む
+   * useEffectを使わずにコンポーネント初期化時に実行
+   */
+  const loadTags = async () => {
+    try {
+      const tags = await TagService.findAll();
+      setAvailableTags(tags.map(tag => tag.name));
+    } catch (error) {
+      console.error('タグの読み込みに失敗しました:', error);
+      // エラー時はデフォルトタグを設定
+      setAvailableTags([
+        'フロントエンド', 'バックエンド', 'React', 'TypeScript', 'JavaScript', 
+        'Python', 'Node.js', 'デザイナー', 'エンジニア', 'プロダクトマネージャー'
+      ]);
+    } finally {
+      setIsLoadingTags(false);
+    }
+  };
+
+  // 初回レンダリング時にタグを読み込む
+  if (isLoadingTags) {
+    loadTags();
+  }
 
   /**
    * 新規タグ追加処理
+   * データベースに保存してから利用可能タグリストを更新
    */
-  const handleNewTagsAdded = (newTags: string[]) => {
-    setAvailableTags(prev => {
-      // 重複を避けて新規タグを先頭に追加
-      const uniqueNewTags = newTags.filter(tag => !prev.includes(tag));
-      return [...uniqueNewTags, ...prev];
-    });
+  const handleNewTagsAdded = async (newTags: string[]) => {
+    try {
+      // 新規タグをデータベースに保存
+      const createdTags = await TagService.createMany(newTags);
+      
+      setAvailableTags(prev => {
+        // 重複を避けて新規タグを先頭に追加
+        const uniqueNewTags = createdTags.map(tag => tag.name).filter(tagName => !prev.includes(tagName));
+        return [...uniqueNewTags, ...prev];
+      });
+    } catch (error) {
+      console.error('新規タグの作成に失敗しました:', error);
+      Alert.alert(
+        'エラー',
+        'タグの保存中にエラーが発生しました。',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   /**
    * フォーム送信時の処理
-   * 実際のアプリケーションではRealm DBへの保存処理を実装
+   * Prisma DBへの保存処理を実装
    */
   const handleSubmit = async (data: PersonRegistrationFormData) => {
     setIsSubmitting(true);
 
     try {
-      // ここで実際のRealm DB保存処理を行う
-      // 今回はシミュレーションのため、1秒待機
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // タグ名を配列に変換
+      const tagNames = data.tags 
+        ? data.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+        : [];
+
+      // タグをデータベースに作成または取得
+      let tagIds: string[] = [];
+      if (tagNames.length > 0) {
+        const tags = await TagService.createMany(tagNames);
+        tagIds = tags.map(tag => tag.id);
+      }
+
+      // 人物データを準備
+      const personData = {
+        name: data.name,
+        handle: data.handle || undefined,
+        company: data.company || undefined,
+        position: data.position || undefined,
+        description: data.description || undefined,
+        productName: data.product_name || undefined,
+        memo: data.memo || undefined,
+        githubId: data.github_id || undefined,
+        tagIds: tagIds,
+      };
+
+      // 人物をデータベースに保存
+      const savedPerson = await PersonService.create(personData);
       
-      // 送信データをコンソールに出力（デバッグ用）
-      console.log('Person registration data:', data);
+      console.log('Person saved successfully:', savedPerson);
       
       // 成功メッセージを表示
       Alert.alert(
@@ -55,7 +115,8 @@ export default function PersonRegisterScreen() {
           },
         ]
       );
-    } catch {
+    } catch (error) {
+      console.error('人物の登録に失敗しました:', error);
       // エラー処理
       Alert.alert(
         'エラー',
@@ -78,12 +139,14 @@ export default function PersonRegisterScreen() {
       </ThemedView>
 
       {/* 人物登録フォーム */}
-      <PersonRegistrationForm 
-        onSubmit={handleSubmit}
-        isSubmitting={isSubmitting}
-        availableTags={availableTags}
-        onNewTagsAdded={handleNewTagsAdded}
-      />
+      {!isLoadingTags && (
+        <PersonRegistrationForm 
+          onSubmit={handleSubmit}
+          isSubmitting={isSubmitting}
+          availableTags={availableTags}
+          onNewTagsAdded={handleNewTagsAdded}
+        />
+      )}
     </ThemedView>
   );
 }

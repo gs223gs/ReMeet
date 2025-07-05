@@ -1,0 +1,120 @@
+// ReMeetアプリケーションのPrismaスキーマファイル
+// SQLiteを使用したローカルデータベース設定
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../database/generated"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./remeet.db"
+}
+
+// ユーザープロフィール（自分自身の情報）
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  handle       String?
+  company      String?
+  position     String?
+  description  String?
+  productName  String?  @map("product_name")
+  memo         String?
+  githubId     String?  @map("github_id")
+  receipt      String?  // 買い切りレシート
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+// 出会った人物の情報
+model Person {
+  id           String   @id @default(cuid())
+  name         String
+  handle       String?
+  company      String?
+  position     String?
+  description  String?
+  productName  String?  @map("product_name")
+  memo         String?
+  githubId     String?  @map("github_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // リレーション
+  sourceRelations  Relation[] @relation("SourcePerson")
+  targetRelations  Relation[] @relation("TargetPerson")
+  personTags       PersonTag[]
+  personEvents     PersonEvent[]
+
+  @@map("persons")
+}
+
+// タグ管理
+model Tag {
+  id         String   @id @default(cuid())
+  name       String   @unique
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // リレーション
+  personTags PersonTag[]
+
+  @@map("tags")
+}
+
+// イベント管理
+model Event {
+  id           String   @id @default(cuid())
+  name         String
+  date         DateTime?
+  location     String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // リレーション
+  personEvents PersonEvent[]
+
+  @@map("events")
+}
+
+// 人物間の関係
+model Relation {
+  id           String   @id @default(cuid())
+  sourceId     String   @map("source_id")
+  targetId     String   @map("target_id")
+  relationType String   @map("relation_type")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // リレーション
+  sourcePerson Person @relation("SourcePerson", fields: [sourceId], references: [id], onDelete: Cascade)
+  targetPerson Person @relation("TargetPerson", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@map("relations")
+}
+
+// Person - Tag 中間テーブル
+model PersonTag {
+  personId String @map("person_id")
+  tagId    String @map("tag_id")
+
+  // リレーション
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([personId, tagId])
+  @@map("persons_tags")
+}
+
+// Person - Event 中間テーブル
+model PersonEvent {
+  personId String @map("person_id")
+  eventId  String @map("event_id")
+
+  // リレーション
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+  event  Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@id([personId, eventId])
+  @@map("persons_events")
+}
