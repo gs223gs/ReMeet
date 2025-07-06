@@ -29,6 +29,16 @@ export default function HomeScreen() {
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
   // 各カードのrefを保持するMap
   const swipeableRefs = useRef<Map<string, any>>(new Map());
+  // スワイプが開く前に他のカードを閉じる
+  const closeOtherSwipeables = useRef<(excludeId: string) => void>();
+  
+  closeOtherSwipeables.current = (excludeId: string) => {
+    swipeableRefs.current.forEach((ref, id) => {
+      if (id !== excludeId && ref?.close) {
+        ref.close();
+      }
+    });
+  };
   
   // Jotai Atomsから状態を取得
   const [people, setPeople] = useAtom(peopleAtom);
@@ -179,12 +189,11 @@ export default function HomeScreen() {
               person={person}
               onPress={() => handlePersonDetail(person.id)}
               onDelete={() => handleSwipeDelete(person)}
+              onSwipeStartDrag={() => {
+                // ドラッグ開始時に全ての他のカードを閉じる
+                closeOtherSwipeables.current?.(person.id);
+              }}
               onSwipeOpen={() => {
-                // 他の開いているカードを閉じる
-                if (openSwipeId && openSwipeId !== person.id) {
-                  const prevRef = swipeableRefs.current.get(openSwipeId);
-                  prevRef?.close();
-                }
                 setOpenSwipeId(person.id);
               }}
               onSwipeClose={() => {
