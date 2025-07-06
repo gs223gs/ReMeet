@@ -7,6 +7,7 @@ export interface TagInputWithSuggestionsProps {
   value: string[];
   onChangeText: (tags: string[]) => void;
   onBlur?: () => void;
+  onFocus?: () => void;
   availableTags: string[];
   error?: string;
   testID?: string;
@@ -23,6 +24,7 @@ export function TagInputWithSuggestions({
   value,
   onChangeText,
   onBlur,
+  onFocus,
   availableTags,
   error,
   testID,
@@ -93,6 +95,7 @@ export function TagInputWithSuggestions({
           value={inputText}
           onChangeText={setInputText}
           onBlur={onBlur}
+          onFocus={onFocus}
           autoCapitalize="none"
           testID={testID}
         />

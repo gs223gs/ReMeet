@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedView } from '@/components/ThemedView';
@@ -15,26 +15,28 @@ import type { CreatePersonData } from '@/database/sqlite-services';
 export default function PersonRegisterScreen() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [availableTags, setAvailableTags] = useState<string[]>([
+    'フロントエンド', 'バックエンド', 'React', 'TypeScript', 'JavaScript', 
+    'Python', 'Node.js', 'デザイナー', 'エンジニア', 'プロダクトマネージャー'
+  ]);
+  const [tagsLoaded, setTagsLoaded] = useState(false);
 
-  // コンポーネントマウント時に既存タグを読み込み
-  useEffect(() => {
-    const loadAvailableTags = async () => {
-      try {
-        const tags = await TagService.findAll();
-        setAvailableTags(tags.map(tag => tag.name));
-      } catch (error) {
-        console.error('Failed to load available tags:', error);
-        // エラー時はデフォルトタグを設定
-        setAvailableTags([
-          'フロントエンド', 'バックエンド', 'React', 'TypeScript', 'JavaScript', 
-          'Python', 'Node.js', 'デザイナー', 'エンジニア', 'プロダクトマネージャー'
-        ]);
-      }
-    };
+  /**
+   * 既存タグを読み込む関数
+   */
+  const loadAvailableTags = async () => {
+    if (tagsLoaded) return; // 既に読み込み済みの場合はスキップ
     
-    loadAvailableTags();
-  }, []);
+    try {
+      const tags = await TagService.findAll();
+      setAvailableTags(tags.map(tag => tag.name));
+      setTagsLoaded(true);
+    } catch (error) {
+      console.error('Failed to load available tags:', error);
+      // エラー時はデフォルトタグを保持
+      setTagsLoaded(true);
+    }
+  };
 
   /**
    * 新規タグ追加処理
@@ -145,6 +147,7 @@ export default function PersonRegisterScreen() {
         isSubmitting={isSubmitting}
         availableTags={availableTags}
         onNewTagsAdded={handleNewTagsAdded}
+        onTagsInputFocus={loadAvailableTags}
       />
     </ThemedView>
   );

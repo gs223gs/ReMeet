@@ -27,6 +27,8 @@ export interface PersonRegistrationFormProps {
   availableTags?: string[];
   /** 新規タグ登録時のコールバック */
   onNewTagsAdded?: (newTags: string[]) => void;
+  /** タグ入力フィールドフォーカス時のコールバック */
+  onTagsInputFocus?: () => void;
 }
 
 /**
@@ -39,7 +41,8 @@ export function PersonRegistrationForm({
   isSubmitting = false,
   initialData,
   availableTags = [],
-  onNewTagsAdded
+  onNewTagsAdded,
+  onTagsInputFocus
 }: PersonRegistrationFormProps) {
   
   // フォーム送信時に新規タグを登録
@@ -234,6 +237,7 @@ export function PersonRegistrationForm({
                 value={tagsArray}
                 onChangeText={handleTagsChange}
                 onBlur={onBlur}
+                onFocus={onTagsInputFocus}
                 availableTags={availableTags}
                 error={errors.tags?.message}
                 placeholder="タグを入力してEnterキーを押してください"
