@@ -5,9 +5,8 @@ import {
   View,
   ActivityIndicator,
   Alert,
-  Pressable,
 } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
 import { ThemedView } from "@/components/ThemedView";
@@ -22,9 +21,7 @@ import type { PersonWithRelations } from "@/database/sqlite-types";
  * TanStack Queryを使用してデータ管理とuseEffect禁止を実現
  */
 export default function PersonDetailScreen() {
-  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const primaryColor = useThemeColor({}, "tint");
   const borderColor = useThemeColor({}, "border");
 
   // TanStack Queryを使用して人物データを取得
@@ -60,13 +57,6 @@ export default function PersonDetailScreen() {
     }, [refetch, id])
   );
 
-  /**
-   * 戻るボタンの処理
-   */
-  const handleGoBack = () => {
-    router.back();
-  };
-
   // IDが指定されていない場合のエラー
   if (!id) {
     return (
@@ -75,12 +65,6 @@ export default function PersonDetailScreen() {
           <ThemedText style={styles.errorText}>
             人物IDが指定されていません
           </ThemedText>
-          <Pressable
-            style={[styles.backButton, { backgroundColor: primaryColor }]}
-            onPress={handleGoBack}
-          >
-            <ThemedText style={styles.backButtonText}>戻る</ThemedText>
-          </Pressable>
         </ThemedView>
       </ThemedView>
     );
@@ -98,12 +82,6 @@ export default function PersonDetailScreen() {
           <ThemedText style={styles.errorText}>
             データの読み込みに失敗しました
           </ThemedText>
-          <Pressable
-            style={[styles.backButton, { backgroundColor: primaryColor }]}
-            onPress={handleGoBack}
-          >
-            <ThemedText style={styles.backButtonText}>戻る</ThemedText>
-          </Pressable>
         </ThemedView>
       </ThemedView>
     );
@@ -271,24 +249,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-  },
-  backButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  backButtonText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
   scrollView: {
     flex: 1,
   },
@@ -314,7 +274,6 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 18,
     textAlign: "center",
-    marginBottom: 20,
     opacity: 0.7,
   },
   detailCard: {

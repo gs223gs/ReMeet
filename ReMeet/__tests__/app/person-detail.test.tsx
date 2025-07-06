@@ -17,13 +17,9 @@ jest.mock('@/database/sqlite-services', () => ({
 }));
 
 // expo-routerのモック
-const mockBack = jest.fn();
 const mockLocalSearchParams = { id: 'person-1' };
 
 jest.mock('expo-router', () => ({
-  useRouter: () => ({
-    back: mockBack,
-  }),
   useLocalSearchParams: () => mockLocalSearchParams,
 }));
 
@@ -41,7 +37,6 @@ describe('PersonDetailScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseFocusEffectCallback = null;
-    mockBack.mockClear();
     // デフォルトのパラメータを設定
     (mockLocalSearchParams as any).id = 'person-1';
   });
@@ -114,7 +109,6 @@ describe('PersonDetailScreen', () => {
       // Assert: エラーメッセージが表示されることを確認
       await waitFor(() => {
         expect(screen.getByText('指定された人物が見つかりません')).toBeTruthy();
-        expect(screen.getByText('人物詳細')).toBeTruthy();
       });
     });
 
@@ -160,37 +154,6 @@ describe('PersonDetailScreen', () => {
   });
 
   describe('表示内容', () => {
-    it('ヘッダーが正しく表示される', async () => {
-      // Arrange: テストデータを準備
-      const mockPerson: PersonWithRelations = {
-        id: 'person-1',
-        name: '田中一郎',
-        handle: null,
-        company: null,
-        position: null,
-        description: null,
-        productName: null,
-        memo: null,
-        githubId: null,
-        createdAt: new Date('2025-01-01'),
-        updatedAt: new Date('2025-01-01'),
-        tags: [],
-        events: [],
-        relations: [],
-      };
-
-      mockPersonService.findById.mockResolvedValue(mockPerson);
-
-      // Act: コンポーネントをレンダリング
-      render(<PersonDetailScreen />);
-
-      // Assert: ヘッダーが表示されることを確認
-      await waitFor(() => {
-        expect(screen.getByText('人物詳細')).toBeTruthy();
-        expect(screen.getByTestId('back-button')).toBeTruthy();
-        expect(screen.getByText('← 戻る')).toBeTruthy();
-      });
-    });
 
     it('必須項目のみの人物データが正しく表示される', async () => {
       // Arrange: 必須項目のみのテストデータ
@@ -333,81 +296,10 @@ describe('PersonDetailScreen', () => {
 
       // Assert: ローディング表示されることを確認
       expect(screen.getByText('読み込み中...')).toBeTruthy();
-      expect(screen.getByText('人物詳細')).toBeTruthy();
-      expect(screen.getByText('← 戻る')).toBeTruthy();
     });
   });
 
   describe('ユーザーインタラクション', () => {
-    it('戻るボタンが表示される', async () => {
-      // Arrange: テストデータを準備
-      const mockPerson: PersonWithRelations = {
-        id: 'person-1',
-        name: 'テスト太郎',
-        handle: null,
-        company: null,
-        position: null,
-        description: null,
-        productName: null,
-        memo: null,
-        githubId: null,
-        createdAt: new Date('2025-01-01'),
-        updatedAt: new Date('2025-01-01'),
-        tags: [],
-        events: [],
-        relations: [],
-      };
-
-      mockPersonService.findById.mockResolvedValue(mockPerson);
-
-      // Act: コンポーネントをレンダリング
-      render(<PersonDetailScreen />);
-
-      // Assert: 戻るボタンが表示されることを確認
-      await waitFor(() => {
-        const backButton = screen.getByTestId('back-button');
-        expect(backButton).toBeTruthy();
-        expect(screen.getByText('← 戻る')).toBeTruthy();
-      });
-    });
-
-    it('戻るボタンタップで前の画面に戻る', async () => {
-      // Arrange: テストデータを準備
-      const mockPerson: PersonWithRelations = {
-        id: 'person-1',
-        name: 'テスト太郎',
-        handle: null,
-        company: null,
-        position: null,
-        description: null,
-        productName: null,
-        memo: null,
-        githubId: null,
-        createdAt: new Date('2025-01-01'),
-        updatedAt: new Date('2025-01-01'),
-        tags: [],
-        events: [],
-        relations: [],
-      };
-
-      mockPersonService.findById.mockResolvedValue(mockPerson);
-
-      // Act: コンポーネントをレンダリング
-      render(<PersonDetailScreen />);
-      
-      // 戻るボタンが表示されるまで待機
-      await waitFor(() => {
-        const backButton = screen.getByTestId('back-button');
-        expect(backButton).toBeTruthy();
-      });
-
-      // ボタンをタップ
-      const backButton = screen.getByTestId('back-button');
-      fireEvent.press(backButton);
-
-      // Assert: router.backが呼ばれることを確認
-      expect(mockBack).toHaveBeenCalledWith();
-    });
 
     it('TanStack Queryでデータが正しく読み込まれる', async () => {
       // Arrange: テストデータを準備
