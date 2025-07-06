@@ -1,51 +1,14 @@
-# 機能仕様
-
-## タグ機能
-- 人物登録時にタグを設定可能
-- 追加ボタン方式でタグを個別に追加
-- 既存タグの再利用によりデータの一貫性を保つ
-- タグによる人物の分類・検索が可能
-- 選択済みタグの表示と削除機能
-- 追加したタグは自動的に選択状態になる
-
-## データ形式
-- タグは文字列配列として管理
-- 保存時はカンマ区切りの文字列に変換
-- 例: "フロントエンド, React, TypeScript"
-- 最大200文字まで入力可能
-
-## コンポーネント仕様
-
-### TagInputWithSuggestions
-- **機能**: メインのタグ入力コンポーネント
-- **特徴**:
-  - 追加ボタンによる個別タグ追加
-  - 既存タグトグルメニューからの選択
-  - 選択済みタグの一覧表示（バツボタンで削除可能）
-  - 入力がない場合は追加ボタンが無効化
-
-### TagChip
-- **機能**: 個別タグの表示コンポーネント
-- **特徴**:
-  - 選択状態の視覚的表現
-  - 削除ボタン（オプション）
-  - テーマカラー対応（theme オブジェクトで色設定を統合）
-
-### TagInput（レガシー）
-- **機能**: サジェスト機能付きタグ入力
-- **特徴**: リアルタイムサジェスト、カンマ区切り入力
-
-### TagSelector（レガシー）
-- **機能**: 既存タグからの選択
-- **特徴**: 水平スクロール、複数選択
 
 # ディレクトリ構造
 ```
 ReMeet/
 ├── __tests__/                    # テストファイル
-│   └── components/               # コンポーネントのテスト
-│       ├── ThemedText.test.tsx   # ThemedTextコンポーネントのテスト
-│       └── forms/               # フォーム関連のテスト
+│   ├── app/                     # アプリケーションのテスト
+│   │   └── (tabs)/             # タブ画面のテスト
+│   │       └── people.test.tsx  # 人物一覧画面のテスト
+│   └── components/              # コンポーネントのテスト
+│       ├── ThemedText.test.tsx  # ThemedTextコンポーネントのテスト
+│       └── forms/              # フォーム関連のテスト
 │           ├── FormInput.test.tsx        # FormInputコンポーネントのテスト
 │           ├── PersonRegistrationForm.test.tsx  # 個人登録フォームのテスト
 │           ├── TagInput.test.tsx         # タグ入力コンポーネントのテスト
@@ -56,7 +19,8 @@ ReMeet/
 │   ├── (tabs)/                  # タブナビゲーション
 │   │   ├── _layout.tsx          # タブレイアウト
 │   │   ├── index.tsx            # ホーム画面
-│   │   └── explore.tsx          # 探索画面
+│   │   ├── explore.tsx          # 探索画面
+│   │   └── people.tsx           # 人物一覧画面
 │   ├── _layout.tsx              # ルートレイアウト
 │   ├── +not-found.tsx           # 404ページ
 │   ├── person-register.tsx      # 個人登録画面
@@ -71,45 +35,38 @@ ReMeet/
 │   │   ├── TagSelector.tsx      # タグ選択コンポーネント
 │   │   └── UserRegistrationForm.tsx  # ユーザー登録フォームコンポーネント
 │   ├── ui/                      # UI基本コンポーネント
-│   │   ├── IconSymbol.tsx       # アイコンシンボル
-│   │   └── TabBarBackground.tsx # タブバー背景
-│   ├── Collapsible.tsx          # 折りたたみ可能コンポーネント
-│   ├── ExternalLink.tsx         # 外部リンクコンポーネント
+│   │   ├── IconSymbol.tsx       # アイコンシンボル（iOS用もあり）
+│   │   └── TabBarBackground.tsx # タブバー背景（iOS用もあり）
 │   ├── HapticTab.tsx            # ハプティックフィードバック付きタブ
-│   ├── HelloWave.tsx            # ウェーブアニメーション
-│   ├── ParallaxScrollView.tsx   # パララックススクロールビュー
 │   ├── ThemedText.tsx           # テーマ対応テキスト
 │   └── ThemedView.tsx           # テーマ対応ビュー
+├── database/                    # データベース関連
+│   ├── sqlite-services/         # SQLiteサービス層
+│   │   ├── PersonService.ts     # 人物データのサービス
+│   │   └── index.ts            # エクスポート用インデックス
+│   └── sqlite-types.ts          # SQLite用の型定義
 ├── types/                       # 型定義
 │   └── forms.ts                 # フォーム関連の型定義とZodスキーマ
 ├── hooks/                       # カスタムフック
 │   ├── useColorScheme.ts        # カラースキーム管理
+│   ├── useColorScheme.web.ts   # Web用カラースキーム管理
 │   └── useThemeColor.ts         # テーマカラー管理
 ├── constants/                   # 定数定義
 │   └── Colors.ts                # カラー定数
 ├── assets/                      # 静的アセット
 │   ├── fonts/                   # フォントファイル
+│   │   └── SpaceMono-Regular.ttf
 │   └── images/                  # 画像ファイル
-├── docs/                        # ドキュメント
-│   └── product.md               # プロダクト構成ドキュメント（本ファイル）
+│       ├── adaptive-icon.png
+│       ├── favicon.png
+│       ├── icon.png
+│       └── splash-icon.png
+├── scripts/                     # ユーティリティスクリプト
+│   └── reset-project.js         # プロジェクトリセット用スクリプト
+├── app.json                     # Expoアプリ設定
+├── expo-env.d.ts                # Expo環境型定義
+├── eslint.config.js             # ESLint設定
 ├── jest.config.js               # Jest設定
 ├── package.json                 # パッケージ定義
 └── tsconfig.json                # TypeScript設定
 ```
-
-# コーディング規約
-
-## 必須ルール
-1. **useEffect使用禁止** - パフォーマンスと保守性の観点から
-2. **map関数でのindex使用禁止** - 必ず一意のkeyを使用
-3. **TDD（テスト駆動開発）** - 実装前にテストを書く
-4. **日本語でのコミット** - コミットメッセージは日本語で記載
-
-## リファクタリング履歴
-
-### 2025-07-05
-- **useEffect除去**: TagInput.tsxから不要なuseEffectを削除
-- **key修正**: 全コンポーネントでmap関数のkeyをindexから一意の値に変更
-- **TagChip追加**: 個別タグ表示用の再利用可能コンポーネントを作成
-- **props最適化**: TagChipのカラー関連propsをthemeオブジェクトに統合
-- **testID更新**: 動的なindexベースのIDから意味のある名前に変更
