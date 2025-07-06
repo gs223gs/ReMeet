@@ -1,17 +1,18 @@
-import React, { useState, useRef } from 'react';
-import { ScrollView, StyleSheet, View, ActivityIndicator, Alert, RefreshControl, Pressable } from 'react-native';
+import React, { useRef, useCallback } from 'react';
+import { StyleSheet, View, ActivityIndicator, Alert, Pressable, FlatList, TouchableWithoutFeedback } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { useAtom } from 'jotai';
-import { GestureHandlerRootView, PanGestureHandler, State } from 'react-native-gesture-handler';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
-import { SwipeablePersonCard } from '@/components/ui/SwipeablePersonCard';
+import { SwipeableCard, SwipeableCardRef } from '@/components/ui/SwipeableCard';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { useSwipeDelete } from '@/hooks/useSwipeDelete';
 import { PersonService } from '@/database/sqlite-services';
-import { peopleAtom, peopleLoadingAtom, peopleErrorAtom } from '@/atoms/peopleAtoms';
+import { peopleAtom, peopleLoadingAtom, peopleErrorAtom, openedMenuIdAtom } from '@/atoms/peopleAtoms';
+import type { PersonWithRelations } from '@/database/sqlite-types';
 
 /**
  * ホーム画面（人物一覧表示）
@@ -25,25 +26,14 @@ export default function HomeScreen() {
   const borderColor = useThemeColor({}, 'border'); // テーマに沿った境界線色
   const { handleSwipeDelete } = useSwipeDelete();
   
-  // 開いているスワイプカードのIDを管理
-  const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
-  // 各カードのrefを保持するMap
-  const swipeableRefs = useRef<Map<string, any>>(new Map());
-  // 現在開いているSwipeableのrefを管理
-  const prevOpenedRow = useRef<any>(null);
-  
-  // 新しいスワイプが開くときに前のものを閉じる関数
-  const closeRow = (currentRef: any) => {
-    if (prevOpenedRow.current && prevOpenedRow.current !== currentRef) {
-      prevOpenedRow.current.close();
-    }
-    prevOpenedRow.current = currentRef;
-  };
-  
   // Jotai Atomsから状態を取得
   const [people, setPeople] = useAtom(peopleAtom);
   const [isLoading, setIsLoading] = useAtom(peopleLoadingAtom);
   const [error, setError] = useAtom(peopleErrorAtom);
+  const [openedMenuId, setOpenedMenuId] = useAtom(openedMenuIdAtom);
+  
+  // カードのrefを管理するMap
+  const cardRefs = useRef<Map<string, SwipeableCardRef>>(new Map());
   
   // TanStack Queryを使用して人物データを取得（最新バージョン対応）
   const { refetch, isRefetching } = useQuery({
@@ -94,9 +84,68 @@ export default function HomeScreen() {
   /**
    * 人物詳細画面への遷移
    */
-  const handlePersonDetail = (personId: string) => {
-    router.push(`/person-detail?id=${personId}`);
-  };
+  const handlePersonDetail = useCallback((person: PersonWithRelations) => {
+    router.push(`/person-detail?id=${person.id}`);
+  }, [router]);
+
+  // 開いているメニューを閉じる関数
+  const closeOpenedMenu = useCallback(() => {
+    if (openedMenuId) {
+      const cardRef = cardRefs.current.get(openedMenuId);
+      if (cardRef) {
+        cardRef.close();
+      }
+      setOpenedMenuId(null);
+    }
+  }, [openedMenuId, setOpenedMenuId]);
+
+  // スクロール開始時にメニューを閉じる
+  const handleScrollBeginDrag = useCallback(() => {
+    closeOpenedMenu();
+  }, [closeOpenedMenu]);
+
+  // 空白部分タップ時にメニューを閉じる
+  const handleBackgroundPress = useCallback(() => {
+    closeOpenedMenu();
+  }, [closeOpenedMenu]);
+
+  // カードのレンダリング
+  const renderCard = useCallback(({ item }: { item: PersonWithRelations }) => {
+    return (
+      <SwipeableCard
+        ref={(ref) => {
+          if (ref) {
+            cardRefs.current.set(item.id, ref);
+          } else {
+            cardRefs.current.delete(item.id);
+          }
+        }}
+        person={item}
+        onPress={() => handlePersonDetail(item)}
+        onDelete={() => handleSwipeDelete(item)}
+      />
+    );
+  }, [handlePersonDetail, handleSwipeDelete]);
+
+  // keyExtractor
+  const keyExtractor = useCallback((item: PersonWithRelations) => item.id, []);
+
+  // アイテム区切り
+  const ItemSeparatorComponent = useCallback(() => <View style={styles.separator} />, []);
+
+  /**
+   * 空の状態表示コンポーネント
+   */
+  const EmptyComponent = () => (
+    <ThemedView style={styles.emptyContainer}>
+      <ThemedText style={styles.emptyText}>
+        まだ人物が登録されていません
+      </ThemedText>
+      <ThemedText style={styles.emptySubtext}>
+        「人物登録」から新しい人物を追加してください
+      </ThemedText>
+    </ThemedView>
+  );
 
   // エラー時の表示
   if (error) {
@@ -130,102 +179,51 @@ export default function HomeScreen() {
 
   return (
     <GestureHandlerRootView style={styles.container}>
-    <ThemedView style={styles.container}>
-      {/* ヘッダーと追加ボタン */}
-      <ThemedView style={styles.header}>
-        <View style={styles.headerContent}>
-          <View style={styles.titleContainer}>
-            <ThemedText type="title">ReMeet</ThemedText>
-            <ThemedText style={styles.subtitle}>
-              {people.length}人が登録されています
-            </ThemedText>
+      <ThemedView style={styles.container}>
+        {/* ヘッダーと追加ボタン */}
+        <ThemedView style={styles.header}>
+          <View style={styles.headerContent}>
+            <View style={styles.titleContainer}>
+              <ThemedText type="title">ReMeet</ThemedText>
+              <ThemedText style={styles.subtitle}>
+                {people.length}人が登録されています
+              </ThemedText>
+            </View>
+            <Pressable
+              style={[
+                styles.addButton, 
+                { 
+                  backgroundColor: primaryColor,
+                  borderColor: borderColor
+                }
+              ]}
+              onPress={handleAddPerson}
+              testID="add-person-button"
+            >
+              <ThemedText style={[styles.addButtonText, { color: buttonTextColor }]}>+</ThemedText>
+            </Pressable>
           </View>
-          <Pressable
-            style={[
-              styles.addButton, 
-              { 
-                backgroundColor: primaryColor,
-                borderColor: borderColor
-              }
-            ]}
-            onPress={handleAddPerson}
-            testID="add-person-button"
-          >
-            <ThemedText style={[styles.addButtonText, { color: buttonTextColor }]}>+</ThemedText>
-          </Pressable>
-        </View>
-      </ThemedView>
+        </ThemedView>
 
-      {/* 人物一覧 */}
-      <PanGestureHandler
-        onHandlerStateChange={(event) => {
-          // 上下スワイプで削除ボタンを閉じる
-          if (event.nativeEvent.state === State.BEGAN && prevOpenedRow.current) {
-            const { velocityY, translationY } = event.nativeEvent;
-            // 上下方向のジェスチャーを検出
-            if (Math.abs(velocityY) > Math.abs(event.nativeEvent.velocityX) || Math.abs(translationY) > 10) {
-              prevOpenedRow.current.close();
-              prevOpenedRow.current = null;
-              setOpenSwipeId(null);
-            }
-          }
-        }}
-      >
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          refreshControl={
-            <RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />
-          }
-          onTouchStart={() => {
-            // スクロールビューの背景がタップされたら開いているスワイプを閉じる
-            if (prevOpenedRow.current) {
-              prevOpenedRow.current.close();
-              prevOpenedRow.current = null;
-              setOpenSwipeId(null);
-            }
-          }}
-          testID="home-scroll-view"
-        >
-        {people.length === 0 ? (
-          <ThemedView style={styles.emptyContainer}>
-            <ThemedText style={styles.emptyText}>
-              まだ人物が登録されていません
-            </ThemedText>
-            <ThemedText style={styles.emptySubtext}>
-              「人物登録」から新しい人物を追加してください
-            </ThemedText>
-          </ThemedView>
-        ) : (
-          people.map((person) => (
-            <SwipeablePersonCard
-              key={person.id}
-              person={person}
-              onPress={() => handlePersonDetail(person.id)}
-              onDelete={() => handleSwipeDelete(person)}
-              onSwipeOpen={(ref) => {
-                closeRow(ref);
-                setOpenSwipeId(person.id);
-              }}
-              onSwipeClose={() => {
-                if (openSwipeId === person.id) {
-                  setOpenSwipeId(null);
-                  prevOpenedRow.current = null;
-                }
-              }}
-              ref={(ref) => {
-                if (ref) {
-                  swipeableRefs.current.set(person.id, ref);
-                } else {
-                  swipeableRefs.current.delete(person.id);
-                }
-              }}
+        {/* カードリスト */}
+        <TouchableWithoutFeedback onPress={handleBackgroundPress}>
+          <View style={styles.listContainer}>
+            <FlatList
+              data={people}
+              renderItem={renderCard}
+              keyExtractor={keyExtractor}
+              contentContainerStyle={styles.contentContainer}
+              ItemSeparatorComponent={ItemSeparatorComponent}
+              ListEmptyComponent={EmptyComponent}
+              refreshing={isRefetching}
+              onRefresh={onRefresh}
+              onScrollBeginDrag={handleScrollBeginDrag}
+              showsVerticalScrollIndicator={true}
+              testID="people-flatlist"
             />
-          ))
-        )}
-        </ScrollView>
-      </PanGestureHandler>
-    </ThemedView>
+          </View>
+        </TouchableWithoutFeedback>
+      </ThemedView>
     </GestureHandlerRootView>
   );
 }
@@ -274,13 +272,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 28,
   },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -295,6 +286,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 60,
+    minHeight: 300,
   },
   emptyText: {
     fontSize: 18,
@@ -304,5 +296,15 @@ const styles = StyleSheet.create({
   emptySubtext: {
     textAlign: 'center',
     opacity: 0.6,
+  },
+  listContainer: {
+    flex: 1,
+  },
+  contentContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  separator: {
+    height: 8,
   },
 });

@@ -22,3 +22,9 @@ export const peopleLoadingAtom = atom<boolean>(false);
  * エラー情報を管理
  */
 export const peopleErrorAtom = atom<Error | null>(null);
+
+/**
+ * 現在開いているメニューのカードIDを管理するAtom
+ * 同時に開けるメニューは1つだけ
+ */
+export const openedMenuIdAtom = atom<string | null>(null);

@@ -83,6 +83,85 @@ jest.mock('@/components/ui/SwipeablePersonCard', () => {
   return { SwipeablePersonCard };
 });
 
+// SwipeableCard のモック
+jest.mock('@/components/ui/SwipeableCard', () => {
+  const React = require('react');
+  const { TouchableOpacity, View, Text } = require('react-native');
+  
+  const SwipeableCard = React.forwardRef(({ person, onPress, onDelete, onHide, ...props }, ref) => {
+    React.useImperativeHandle(ref, () => ({
+      close: jest.fn(),
+    }));
+    
+    return React.createElement(
+      View,
+      { ...props, testID: `swipeable-card-${person.id}` },
+      React.createElement(
+        TouchableOpacity,
+        { 
+          onPress,
+          testID: `card-${person.id}`
+        },
+        React.createElement(Text, {}, person.name),
+        ...(person.tags && person.tags.length > 0 ? person.tags.map(tag => 
+          React.createElement(Text, { key: tag.id }, tag.name)
+        ) : []),
+        ...(person.events && person.events.length > 0 ? person.events.map(event => [
+          React.createElement(Text, { key: `${event.id}-name` }, `📅 ${event.name}`),
+          ...(event.location ? [React.createElement(Text, { key: `${event.id}-location` }, `📍 ${event.location}`)] : [])
+        ]).flat() : [])
+      ),
+      // アクションボタン
+      React.createElement(
+        TouchableOpacity,
+        { 
+          onPress: onDelete,
+          testID: `delete-button-${person.id}`
+        },
+        React.createElement(Text, {}, '削除')
+      ),
+      ...(onHide ? [React.createElement(
+        TouchableOpacity,
+        { 
+          onPress: onHide,
+          testID: `hide-button-${person.id}`
+        },
+        React.createElement(Text, {}, '非表示')
+      )] : [])
+    );
+  });
+  
+  SwipeableCard.displayName = 'SwipeableCard';
+  
+  return { SwipeableCard };
+});
+
+// SwipeableCardList のモック
+jest.mock('@/components/ui/SwipeableCardList', () => {
+  const React = require('react');
+  const { FlatList } = require('react-native');
+  
+  const SwipeableCardList = ({ data, onCardPress, onDeleteCard, onHideCard, ListEmptyComponent, ...props }) => {
+    return React.createElement(FlatList, {
+      ...props,
+      data,
+      testID: 'swipeable-card-list',
+      renderItem: ({ item }) => React.createElement(
+        require('@/components/ui/SwipeableCard').SwipeableCard,
+        {
+          person: item,
+          onPress: () => onCardPress(item),
+          onDelete: () => onDeleteCard(item),
+          onHide: onHideCard ? () => onHideCard(item) : undefined,
+        }
+      ),
+      ListEmptyComponent,
+    });
+  };
+  
+  return { SwipeableCardList };
+});
+
 // useSwipeDelete のモック
 jest.mock('@/hooks/useSwipeDelete', () => ({
   useSwipeDelete: () => ({
