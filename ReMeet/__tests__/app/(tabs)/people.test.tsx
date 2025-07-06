@@ -1,10 +1,10 @@
 /**
  * ホーム画面（人物一覧）のテスト
- * TanStack Query使用版
+ * TanStack Query + Jotai使用版
  * AAAパターン（Arrange, Act, Assert）でテストを構成
  */
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '../../../test-utils/test-utils';
+import { render, screen, waitFor, fireEvent, act } from '../../../test-utils/test-utils';
 import HomeScreen from '@/app/(tabs)/people';
 import { PersonService } from '@/database/sqlite-services';
 import type { PersonWithRelations } from '@/database/sqlite-types';
@@ -23,11 +23,20 @@ jest.mock('expo-router', () => ({
   }),
 }));
 
+// useFocusEffectのモック
+let mockUseFocusEffectCallback: (() => void) | null = null;
+jest.mock('@react-navigation/native', () => ({
+  useFocusEffect: jest.fn((callback) => {
+    mockUseFocusEffectCallback = callback;
+  }),
+}));
+
 const mockPersonService = PersonService as jest.Mocked<typeof PersonService>;
 
 describe('HomeScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseFocusEffectCallback = null;
   });
 
   describe('データ読み込み', () => {
@@ -78,6 +87,13 @@ describe('HomeScreen', () => {
       // Act: コンポーネントをレンダリング
       render(<HomeScreen />);
 
+      // useFocusEffectのコールバックを手動実行してデータフェッチをトリガー
+      await act(async () => {
+        if (mockUseFocusEffectCallback) {
+          mockUseFocusEffectCallback();
+        }
+      });
+
       // Assert: 人物データが表示されることを確認
       await waitFor(() => {
         expect(screen.getByText('山田太郎')).toBeTruthy();
@@ -111,6 +127,13 @@ describe('HomeScreen', () => {
       // Act: コンポーネントをレンダリング
       render(<HomeScreen />);
 
+      // useFocusEffectのコールバックを手動実行してデータフェッチをトリガー
+      await act(async () => {
+        if (mockUseFocusEffectCallback) {
+          mockUseFocusEffectCallback();
+        }
+      });
+
       // Assert: 空状態のメッセージが表示されることを確認
       await waitFor(() => {
         expect(screen.getByText('まだ人物が登録されていません')).toBeTruthy();
@@ -129,6 +152,13 @@ describe('HomeScreen', () => {
 
       // Act: コンポーネントをレンダリング
       render(<HomeScreen />);
+
+      // useFocusEffectのコールバックを手動実行してエラーをトリガー
+      await act(async () => {
+        if (mockUseFocusEffectCallback) {
+          mockUseFocusEffectCallback();
+        }
+      });
 
       // Assert: エラーアラートが表示されることを確認
       await waitFor(() => {
@@ -150,6 +180,13 @@ describe('HomeScreen', () => {
 
       // Act: コンポーネントをレンダリング
       render(<HomeScreen />);
+
+      // useFocusEffectのコールバックを手動実行
+      await act(async () => {
+        if (mockUseFocusEffectCallback) {
+          mockUseFocusEffectCallback();
+        }
+      });
 
       // Assert: ヘッダーが表示されることを確認
       await waitFor(() => {
@@ -183,6 +220,13 @@ describe('HomeScreen', () => {
 
       // Act: コンポーネントをレンダリング
       render(<HomeScreen />);
+
+      // useFocusEffectのコールバックを手動実行
+      await act(async () => {
+        if (mockUseFocusEffectCallback) {
+          mockUseFocusEffectCallback();
+        }
+      });
 
       // Assert: 名前のみが表示されることを確認
       await waitFor(() => {
@@ -229,6 +273,13 @@ describe('HomeScreen', () => {
       // Act: コンポーネントをレンダリング
       render(<HomeScreen />);
 
+      // useFocusEffectのコールバックを手動実行
+      await act(async () => {
+        if (mockUseFocusEffectCallback) {
+          mockUseFocusEffectCallback();
+        }
+      });
+
       // Assert: 全てのタグが表示されることを確認
       await waitFor(() => {
         expect(screen.getByText('鈴木次郎')).toBeTruthy();
@@ -241,7 +292,7 @@ describe('HomeScreen', () => {
   });
 
   describe('ローディング状態', () => {
-    it('初回読み込み時にローディング表示される', () => {
+    it('初回読み込み時にローディング表示される', async () => {
       // Arrange: 長時間かかる非同期処理をモック
       mockPersonService.findMany.mockImplementation(
         () => new Promise(() => {}) // 永続的にペンディング状態
@@ -249,6 +300,13 @@ describe('HomeScreen', () => {
 
       // Act: コンポーネントをレンダリング
       render(<HomeScreen />);
+
+      // useFocusEffectのコールバックを手動実行してローディングをトリガー
+      await act(async () => {
+        if (mockUseFocusEffectCallback) {
+          mockUseFocusEffectCallback();
+        }
+      });
 
       // Assert: ローディング表示されることを確認
       expect(screen.getByText('読み込み中...')).toBeTruthy();
@@ -294,7 +352,7 @@ describe('HomeScreen', () => {
       expect(addButton).toBeTruthy();
     });
 
-    it('TanStack Queryでデータが正しく読み込まれる', async () => {
+    it('TanStack Query + Jotaiでデータが正しく読み込まれる', async () => {
       // Arrange: テストデータを準備
       const mockPeople: PersonWithRelations[] = [
         {
@@ -320,7 +378,14 @@ describe('HomeScreen', () => {
       // Act: コンポーネントをレンダリング
       render(<HomeScreen />);
 
-      // Assert: TanStack Queryがデータを正しく読み込むことを確認
+      // useFocusEffectのコールバックを手動実行
+      await act(async () => {
+        if (mockUseFocusEffectCallback) {
+          mockUseFocusEffectCallback();
+        }
+      });
+
+      // Assert: TanStack Query + Jotaiがデータを正しく読み込むことを確認
       await waitFor(() => {
         expect(screen.getByText('テスト太郎')).toBeTruthy();
         expect(mockPersonService.findMany).toHaveBeenCalledWith();

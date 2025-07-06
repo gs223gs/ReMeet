@@ -23,23 +23,26 @@ export default function PersonRegisterScreen() {
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [, setPeople] = useAtom(peopleAtom);
 
-  // TanStack Queryでタグ一覧を取得
+  // TanStack Queryでタグ一覧を取得（v5対応）
   const { refetch: refetchTags } = useQuery({
     queryKey: ['tags'],
     queryFn: async () => {
-      const tags = await TagService.findAll();
-      return tags.map(tag => tag.name);
-    },
-    onSuccess: (tags) => {
-      setAvailableTags(tags);
-    },
-    onError: (error) => {
-      console.error('Failed to load available tags:', error);
-      // エラー時はデフォルトタグを設定
-      setAvailableTags([
-        'フロントエンド', 'バックエンド', 'React', 'TypeScript', 'JavaScript', 
-        'Python', 'Node.js', 'デザイナー', 'エンジニア', 'プロダクトマネージャー'
-      ]);
+      try {
+        const tags = await TagService.findAll();
+        const tagNames = tags.map(tag => tag.name);
+        // queryFn内で直接状態を更新（v5対応）
+        setAvailableTags(tagNames);
+        return tagNames;
+      } catch (error) {
+        console.error('Failed to load available tags:', error);
+        // エラー時はデフォルトタグを設定
+        const defaultTags = [
+          'フロントエンド', 'バックエンド', 'React', 'TypeScript', 'JavaScript', 
+          'Python', 'Node.js', 'デザイナー', 'エンジニア', 'プロダクトマネージャー'
+        ];
+        setAvailableTags(defaultTags);
+        return defaultTags;
+      }
     },
     enabled: false, // 手動実行のみ
   });
