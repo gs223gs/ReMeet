@@ -22,6 +22,22 @@ export interface CreatePersonData {
 }
 
 /**
+ * 人物更新用のデータ型
+ */
+export interface UpdatePersonData {
+  id: string;
+  name: string;
+  handle?: string | null;
+  company?: string | null;
+  position?: string | null;
+  description?: string | null;
+  productName?: string | null;
+  memo?: string | null;
+  githubId?: string | null;
+  tagIds?: string[];
+}
+
+/**
  * 人物検索用のフィルター
  */
 export interface PersonSearchFilter {
@@ -190,6 +206,53 @@ export async function count(): Promise<number> {
   }
 
 /**
+ * 人物を更新する
+ * @param data 更新する人物のデータ
+ * @returns 更新された人物データ
+ */
+export async function update(data: UpdatePersonData): Promise<PersonWithRelations> {
+  const personIndex = mockPersons.findIndex(p => p.id === data.id);
+  if (personIndex === -1) {
+    throw new Error('指定された人物が見つかりません');
+  }
+
+  if (!data.name || data.name.trim() === '') {
+    throw new Error('名前は必須項目です');
+  }
+
+  // 現在の人物データを取得
+  const currentPerson = mockPersons[personIndex];
+
+  // タグIDから実際のタグ情報を取得
+  let tags: Tag[] = [];
+  if (data.tagIds && data.tagIds.length > 0) {
+    const tagPromises = data.tagIds.map(tagId => TagService.findById(tagId));
+    const tagResults = await Promise.all(tagPromises);
+    tags = tagResults.filter((tag): tag is Tag => tag !== null);
+  }
+
+  // 更新された人物データを作成
+  const updatedPerson: PersonWithRelations = {
+    ...currentPerson,
+    name: data.name.trim(),
+    handle: data.handle,
+    company: data.company,
+    position: data.position,
+    description: data.description,
+    productName: data.productName,
+    memo: data.memo,
+    githubId: data.githubId,
+    updatedAt: new Date(),
+    tags: tags, // 実際のタグ情報を設定
+    // events と relations は既存のデータを保持
+  };
+
+  // 配列内の人物データを置換
+  mockPersons[personIndex] = updatedPerson;
+  return updatedPerson;
+}
+
+/**
  * 人物を削除する
  * @param id 削除する人物のID
  */
@@ -223,6 +286,7 @@ export const PersonService = {
   findById,
   findMany,
   count,
+  update,
   delete: deleteById,
   clearMockData,
   addMockData,
