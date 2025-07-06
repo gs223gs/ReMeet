@@ -7,8 +7,7 @@ import {
   Alert,
   TouchableOpacity,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { Stack } from "expo-router";
+import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
@@ -31,7 +30,6 @@ export default function PersonDetailScreen() {
     data: person,
     isLoading,
     error,
-    refetch,
   } = useQuery({
     queryKey: ["person", id],
     queryFn: async () => {

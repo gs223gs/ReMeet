@@ -1,6 +1,5 @@
 import React from 'react';
-import { useLocalSearchParams } from 'expo-router';
-import { Stack } from 'expo-router';
+import { useLocalSearchParams, Stack } from 'expo-router';
 import { PersonFormScreen } from '@/components/screens/PersonFormScreen';
 
 /**
