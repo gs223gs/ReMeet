@@ -47,7 +47,7 @@ export const SwipeablePersonCard = React.forwardRef<
       ref={typeof ref === 'object' ? ref : internalRef}
       renderRightActions={renderRightActions}
       rightThreshold={40}
-      onSwipeableOpen={onSwipeOpen}
+      onSwipeableWillOpen={onSwipeOpen}  // onSwipeableOpenからonSwipeableWillOpenに変更
       onSwipeableClose={onSwipeClose}
       testID={`swipeable-person-card-${person.id}`}
     >
