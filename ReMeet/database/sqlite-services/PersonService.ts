@@ -4,6 +4,7 @@
  * 実際のSQLiteデータベースの代わりにメモリ内ストレージを使用
  */
 import type { Person, PersonWithTags, PersonWithRelations, Tag, Event } from '../sqlite-types';
+import { TagService } from './TagService';
 
 /**
  * 人物登録用のデータ型
@@ -110,9 +111,17 @@ function generateId(): string {
  * @param data 登録する人物のデータ
  * @returns 登録された人物データ
  */
-export async function create(data: CreatePersonData): Promise<Person> {
+export async function create(data: CreatePersonData): Promise<PersonWithRelations> {
     if (!data.name || data.name.trim() === '') {
       throw new Error('名前は必須項目です');
+    }
+
+    // タグIDから実際のタグ情報を取得
+    let tags: Tag[] = [];
+    if (data.tagIds && data.tagIds.length > 0) {
+      const tagPromises = data.tagIds.map(tagId => TagService.findById(tagId));
+      const tagResults = await Promise.all(tagPromises);
+      tags = tagResults.filter((tag): tag is Tag => tag !== null);
     }
 
     const newPerson: PersonWithRelations = {
@@ -127,7 +136,7 @@ export async function create(data: CreatePersonData): Promise<Person> {
       githubId: data.githubId || null,
       createdAt: new Date(),
       updatedAt: new Date(),
-      tags: [], // 今回は簡略化でタグは空配列
+      tags: tags, // 実際のタグ情報を設定
       events: [], // 今回は簡略化でイベントは空配列
       relations: [], // 今回は簡略化で関係は空配列
     };

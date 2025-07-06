@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { PersonRegistrationForm } from '@/components/forms/PersonRegistrationForm';
 import { PersonRegistrationFormData } from '@/types/forms';
-import { PersonService } from '@/database/sqlite-services';
+import { PersonService, TagService } from '@/database/sqlite-services';
 import type { CreatePersonData } from '@/database/sqlite-services';
 
 /**
@@ -15,20 +15,57 @@ import type { CreatePersonData } from '@/database/sqlite-services';
 export default function PersonRegisterScreen() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [availableTags, setAvailableTags] = useState<string[]>([
-    'フロントエンド', 'バックエンド', 'React', 'TypeScript', 'JavaScript', 
-    'Python', 'Node.js', 'デザイナー', 'エンジニア', 'プロダクトマネージャー'
-  ]);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+
+  // コンポーネントマウント時に既存タグを読み込み
+  useEffect(() => {
+    const loadAvailableTags = async () => {
+      try {
+        const tags = await TagService.findAll();
+        setAvailableTags(tags.map(tag => tag.name));
+      } catch (error) {
+        console.error('Failed to load available tags:', error);
+        // エラー時はデフォルトタグを設定
+        setAvailableTags([
+          'フロントエンド', 'バックエンド', 'React', 'TypeScript', 'JavaScript', 
+          'Python', 'Node.js', 'デザイナー', 'エンジニア', 'プロダクトマネージャー'
+        ]);
+      }
+    };
+    
+    loadAvailableTags();
+  }, []);
 
   /**
    * 新規タグ追加処理
+   * タグをデータベースに保存し、利用可能タグ一覧を更新
    */
-  const handleNewTagsAdded = (newTags: string[]) => {
-    setAvailableTags(prev => {
-      // 重複を避けて新規タグを先頭に追加
-      const uniqueNewTags = newTags.filter(tag => !prev.includes(tag));
-      return [...uniqueNewTags, ...prev];
-    });
+  const handleNewTagsAdded = async (newTags: string[]) => {
+    try {
+      // 新規タグをデータベースに保存
+      const createdTags = [];
+      for (const tagName of newTags) {
+        try {
+          const createdTag = await TagService.create({ name: tagName });
+          createdTags.push(createdTag.name);
+        } catch (error) {
+          // 重複エラーの場合は無視（既存タグ）
+          if (error instanceof Error && error.message.includes('既に存在します')) {
+            createdTags.push(tagName);
+          } else {
+            console.error(`Failed to create tag: ${tagName}`, error);
+          }
+        }
+      }
+      
+      // 利用可能タグ一覧を更新
+      setAvailableTags(prev => {
+        const uniqueNewTags = createdTags.filter(tag => !prev.includes(tag));
+        return [...uniqueNewTags, ...prev];
+      });
+    } catch (error) {
+      console.error('Failed to add new tags:', error);
+    }
   };
 
   /**
@@ -39,6 +76,15 @@ export default function PersonRegisterScreen() {
     setIsSubmitting(true);
 
     try {
+      // タグ名からタグIDを取得または作成
+      let tagIds: string[] = [];
+      if (data.tags && data.tags.trim() !== '') {
+        const tagNames = data.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+        if (tagNames.length > 0) {
+          tagIds = await TagService.findOrCreateByNames(tagNames);
+        }
+      }
+      
       // フォームデータをPersonService用の形式に変換
       const personData: CreatePersonData = {
         name: data.name,
@@ -49,7 +95,7 @@ export default function PersonRegisterScreen() {
         productName: data.productName || undefined,
         memo: data.memo || undefined,
         githubId: data.githubId || undefined,
-        // タグは今回は簡略化で省略（将来的に実装）
+        tagIds: tagIds.length > 0 ? tagIds : undefined, // タグIDを設定
       };
       
       // PersonServiceを使って人物を登録
