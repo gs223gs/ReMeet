@@ -12,5 +12,9 @@ module.exports = {
     '!**/expo-env.d.ts',
     '!**/.expo/**'
   ],
-  testEnvironment: 'jsdom'
+  testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  moduleNameMapper: {
+    '^@react-native-async-storage/async-storage$': '<rootDir>/__mocks__/@react-native-async-storage/async-storage.js'
+  }
 };

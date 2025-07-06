@@ -3,7 +3,7 @@
  * AAAパターン（Arrange, Act, Assert）でテストを構成
  */
 import React from 'react';
-import { render, screen, waitFor, act } from '@testing-library/react-native';
+import { render, screen, waitFor, act } from '../../../test-utils/test-utils';
 import PeopleScreen from '@/app/(tabs)/people';
 import { PersonService } from '@/database/sqlite-services';
 import type { PersonWithRelations } from '@/database/sqlite-types';
