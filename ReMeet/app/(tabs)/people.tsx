@@ -4,11 +4,13 @@ import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { useAtom } from 'jotai';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
+import { SwipeablePersonCard } from '@/components/ui/SwipeablePersonCard';
 import { useThemeColor } from '@/hooks/useThemeColor';
+import { useSwipeDelete } from '@/hooks/useSwipeDelete';
 import { PersonService } from '@/database/sqlite-services';
-import type { PersonWithRelations } from '@/database/sqlite-types';
 import { peopleAtom, peopleLoadingAtom, peopleErrorAtom } from '@/atoms/peopleAtoms';
 
 /**
@@ -21,6 +23,7 @@ export default function HomeScreen() {
   const primaryColor = useThemeColor({}, 'tint');
   const buttonTextColor = useThemeColor({}, 'background'); // ボタンテキストは背景色の反対色
   const borderColor = useThemeColor({}, 'border'); // テーマに沿った境界線色
+  const { handleSwipeDelete } = useSwipeDelete();
   
   // Jotai Atomsから状態を取得
   const [people, setPeople] = useAtom(peopleAtom);
@@ -90,58 +93,6 @@ export default function HomeScreen() {
     );
   }
 
-  /**
-   * 人物カードコンポーネント（簡潔版）
-   * 名前、タグ、どこであったかのみ表示
-   * タップで人物詳細画面に遷移
-   */
-  const PersonCard = ({ person }: { person: PersonWithRelations }) => (
-    <Pressable
-      style={styles.personCard}
-      onPress={() => handlePersonDetail(person.id)}
-      testID={`person-card-${person.id}`}
-    >
-      <ThemedView style={styles.personCardContent}>
-        {/* 名前 */}
-        <View style={styles.nameContainer}>
-          <ThemedText type="subtitle" style={styles.name}>
-            {person.name}
-          </ThemedText>
-        </View>
-
-        {/* タグ */}
-        {person.tags && person.tags.length > 0 && (
-          <View style={styles.tagsContainer}>
-            {person.tags.map((tag) => (
-              <View key={tag.id} style={styles.tag}>
-                <ThemedText style={styles.tagText}>
-                  {tag.name}
-                </ThemedText>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* 出会った場所・イベント */}
-        {person.events && person.events.length > 0 && (
-          <View style={styles.eventsContainer}>
-            {person.events.map((event) => (
-              <View key={event.id} style={styles.eventCard}>
-                <ThemedText style={styles.eventName}>
-                  📅 {event.name}
-                </ThemedText>
-                {event.location && (
-                  <ThemedText style={styles.eventLocation}>
-                    📍 {event.location}
-                  </ThemedText>
-                )}
-              </View>
-            ))}
-          </View>
-        )}
-      </ThemedView>
-    </Pressable>
-  );
 
   if (isLoading) {
     return (
@@ -163,6 +114,7 @@ export default function HomeScreen() {
   }
 
   return (
+    <GestureHandlerRootView style={styles.container}>
     <ThemedView style={styles.container}>
       {/* ヘッダーと追加ボタン */}
       <ThemedView style={styles.header}>
@@ -209,11 +161,17 @@ export default function HomeScreen() {
           </ThemedView>
         ) : (
           people.map((person) => (
-            <PersonCard key={person.id} person={person} />
+            <SwipeablePersonCard
+              key={person.id}
+              person={person}
+              onPress={() => handlePersonDetail(person.id)}
+              onDelete={() => handleSwipeDelete(person)}
+            />
           ))
         )}
       </ScrollView>
     </ThemedView>
+    </GestureHandlerRootView>
   );
 }
 
@@ -291,68 +249,5 @@ const styles = StyleSheet.create({
   emptySubtext: {
     textAlign: 'center',
     opacity: 0.6,
-  },
-  personCard: {
-    marginBottom: 16,
-    borderRadius: 12,
-    // Pressableのタップ効果を有効にするための設定
-  },
-  personCardContent: {
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  nameContainer: {
-    marginBottom: 12,
-  },
-  name: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 12,
-  },
-  tag: {
-    backgroundColor: 'rgba(0, 122, 255, 0.1)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginRight: 6,
-    marginBottom: 4,
-  },
-  tagText: {
-    fontSize: 12,
-    color: '#007AFF',
-    fontWeight: '500',
-  },
-  eventsContainer: {
-    // marginBottomを削除して最後の要素として扱う
-  },
-  eventCard: {
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-    padding: 8,
-    borderRadius: 8,
-    marginBottom: 4,
-  },
-  eventName: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#4CAF50',
-    marginBottom: 2,
-  },
-  eventLocation: {
-    fontSize: 12,
-    opacity: 0.7,
   },
 });
