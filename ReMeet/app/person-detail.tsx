@@ -14,6 +14,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { PersonService } from "@/database/sqlite-services";
 import type { PersonWithRelations } from "@/database/sqlite-types";
+import { usePersonMutations } from "@/hooks/usePersonMutations";
 
 /**
  * 人物詳細画面
@@ -24,6 +25,7 @@ export default function PersonDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const borderColor = useThemeColor({}, "border");
+  const { deletePersonMutation } = usePersonMutations();
 
   // TanStack Queryを使用して人物データを取得
   const {
@@ -104,6 +106,31 @@ export default function PersonDetailScreen() {
     );
   }
 
+  // 削除確認アラートとハンドラー
+  const handleDeletePress = () => {
+    Alert.alert(
+      "削除確認",
+      "本当にこの人物を削除しますか？",
+      [
+        {
+          text: "キャンセル",
+          style: "cancel",
+        },
+        {
+          text: "削除する",
+          style: "destructive",
+          onPress: () => {
+            deletePersonMutation.mutate(id, {
+              onSuccess: () => {
+                router.back();
+              },
+            });
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <>
       <Stack.Screen
@@ -140,6 +167,20 @@ export default function PersonDetailScreen() {
           testID="person-detail-scroll-view"
         >
           <PersonDetailCard person={person} borderColor={borderColor} />
+          
+          {/* 削除ボタン */}
+          <View style={styles.deleteButtonContainer}>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={handleDeletePress}
+              disabled={deletePersonMutation.isPending}
+              testID="delete-person-button"
+            >
+              <ThemedText style={styles.deleteButtonText}>
+                {deletePersonMutation.isPending ? "削除中..." : "人物を削除"}
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </ThemedView>
     </>
@@ -424,5 +465,30 @@ const styles = StyleSheet.create({
     fontSize: 14,
     opacity: 0.5,
     marginBottom: 2,
+  },
+  deleteButtonContainer: {
+    marginTop: 32,
+    marginBottom: 20,
+  },
+  deleteButton: {
+    backgroundColor: '#FF3B30',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  deleteButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
