@@ -1,19 +1,41 @@
 /**
  * テストユーティリティ
- * ThemeProviderやその他の必要なProviderを提供
+ * ThemeProviderやTanStack QueryのQueryClientProviderなど必要なProviderを提供
  */
 import React from 'react';
 import { render, RenderOptions } from '@testing-library/react-native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+
+/**
+ * テスト用のQueryClientを作成
+ * 各テストで独立したQueryClientを使用
+ */
+const createTestQueryClient = () => new QueryClient({
+  defaultOptions: {
+    queries: {
+      // テスト中はリトライしない
+      retry: false,
+      // キャッシュ時間を0に設定してテストの独立性を保つ
+      staleTime: 0,
+      gcTime: 0,
+    },
+  },
+});
 
 /**
  * すべてのProviderでラップするWrapper
  */
 const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
+  // 各テストで新しいQueryClientを作成
+  const queryClient = createTestQueryClient();
+
   return (
-    <ThemeProvider>
-      {children}
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        {children}
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 };
 

@@ -210,6 +210,7 @@ export default function HomeScreen() {
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />
         }
+        testID="home-scroll-view"
       >
         {people.length === 0 ? (
           <ThemedView style={styles.emptyContainer}>
