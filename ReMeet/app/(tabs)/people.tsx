@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { ScrollView, StyleSheet, View, ActivityIndicator, Alert, RefreshControl, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -24,6 +24,11 @@ export default function HomeScreen() {
   const buttonTextColor = useThemeColor({}, 'background'); // ボタンテキストは背景色の反対色
   const borderColor = useThemeColor({}, 'border'); // テーマに沿った境界線色
   const { handleSwipeDelete } = useSwipeDelete();
+  
+  // 開いているスワイプカードのIDを管理
+  const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
+  // 各カードのrefを保持するMap
+  const swipeableRefs = useRef<Map<string, any>>(new Map());
   
   // Jotai Atomsから状態を取得
   const [people, setPeople] = useAtom(peopleAtom);
@@ -148,6 +153,14 @@ export default function HomeScreen() {
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />
         }
+        onTouchStart={() => {
+          // スクロールビューの背景がタップされたら開いているスワイプを閉じる
+          if (openSwipeId) {
+            const openRef = swipeableRefs.current.get(openSwipeId);
+            openRef?.close();
+            setOpenSwipeId(null);
+          }
+        }}
         testID="home-scroll-view"
       >
         {people.length === 0 ? (
@@ -166,6 +179,26 @@ export default function HomeScreen() {
               person={person}
               onPress={() => handlePersonDetail(person.id)}
               onDelete={() => handleSwipeDelete(person)}
+              onSwipeOpen={() => {
+                // 他の開いているカードを閉じる
+                if (openSwipeId && openSwipeId !== person.id) {
+                  const prevRef = swipeableRefs.current.get(openSwipeId);
+                  prevRef?.close();
+                }
+                setOpenSwipeId(person.id);
+              }}
+              onSwipeClose={() => {
+                if (openSwipeId === person.id) {
+                  setOpenSwipeId(null);
+                }
+              }}
+              ref={(ref) => {
+                if (ref) {
+                  swipeableRefs.current.set(person.id, ref);
+                } else {
+                  swipeableRefs.current.delete(person.id);
+                }
+              }}
             />
           ))
         )}
