@@ -45,15 +45,16 @@ jest.mock('@/components/ui/IconSymbol', () => ({
 }));
 
 // SwipeablePersonCard のモック
-jest.mock('@/components/ui/SwipeablePersonCard', () => ({
-  SwipeablePersonCard: ({ person, onPress, onDelete, ...props }) => {
-    const React = require('react');
-    const { TouchableOpacity, View, Text } = require('react-native');
-    
+jest.mock('@/components/ui/SwipeablePersonCard', () => {
+  const React = require('react');
+  const { TouchableOpacity, View, Text } = require('react-native');
+  
+  // forwardRefで定義されたコンポーネントのモック
+  const SwipeablePersonCard = React.forwardRef(({ person, onPress, onDelete, onSwipeOpen, onSwipeClose, ...props }, ref) => {
     // 元のPersonCardと同様の構造を再現
     return React.createElement(
       View,
-      { ...props, testID: `swipeable-person-card-${person.id}` },
+      { ...props, testID: `swipeable-person-card-${person.id}`, ref },
       React.createElement(
         TouchableOpacity,
         { 
@@ -75,8 +76,12 @@ jest.mock('@/components/ui/SwipeablePersonCard', () => ({
         ]).flat() : [])
       )
     );
-  },
-}));
+  });
+  
+  SwipeablePersonCard.displayName = 'SwipeablePersonCard';
+  
+  return { SwipeablePersonCard };
+});
 
 // useSwipeDelete のモック
 jest.mock('@/hooks/useSwipeDelete', () => ({

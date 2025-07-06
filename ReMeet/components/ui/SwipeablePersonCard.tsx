@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { ThemedView } from '@/components/ThemedView';
@@ -14,13 +14,18 @@ interface SwipeablePersonCardProps {
   person: PersonWithRelations;
   onPress: () => void;
   onDelete: () => void;
+  onSwipeOpen?: (ref: any) => void;
+  onSwipeClose?: () => void;
 }
 
-export const SwipeablePersonCard: React.FC<SwipeablePersonCardProps> = ({
-  person,
-  onPress,
-  onDelete,
-}) => {
+// forwardRefを使用して外部からrefを受け取れるようにする
+export const SwipeablePersonCard = React.forwardRef<
+  Swipeable,
+  SwipeablePersonCardProps
+>(({ person, onPress, onDelete, onSwipeOpen, onSwipeClose }, ref) => {
+  // 内部refと外部refを統合
+  const internalRef = useRef<Swipeable>(null);
+  const swipeableRef = (ref as React.RefObject<Swipeable>) || internalRef;
   /**
    * 右側に表示される削除アクション
    * 画像の通り赤いボタンで「削除」テキストを表示
@@ -39,13 +44,28 @@ export const SwipeablePersonCard: React.FC<SwipeablePersonCardProps> = ({
 
   return (
     <Swipeable
+      ref={typeof ref === 'object' ? ref : internalRef}
       renderRightActions={renderRightActions}
       rightThreshold={40}
+      onSwipeableOpen={() => {
+        const currentRef = typeof ref === 'object' && ref?.current ? ref.current : internalRef.current;
+        onSwipeOpen?.(currentRef);
+      }}
+      onSwipeableClose={onSwipeClose}
       testID={`swipeable-person-card-${person.id}`}
     >
       <TouchableOpacity
         style={styles.personCard}
-        onPress={onPress}
+        onPress={() => {
+          // スワイプが開いている場合は閉じる
+          if (typeof ref === 'object' && ref?.current) {
+            ref.current.close();
+          } else {
+            internalRef.current?.close();
+          }
+          // 元のonPressを実行
+          onPress();
+        }}
         testID={`person-card-${person.id}`}
       >
         <ThemedView style={styles.personCardContent}>
@@ -90,7 +110,10 @@ export const SwipeablePersonCard: React.FC<SwipeablePersonCardProps> = ({
       </TouchableOpacity>
     </Swipeable>
   );
-};
+});
+
+// displayNameを設定
+SwipeablePersonCard.displayName = 'SwipeablePersonCard';
 
 const styles = StyleSheet.create({
   personCard: {
