@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { useAtom } from 'jotai';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { GestureHandlerRootView, PanGestureHandler, State } from 'react-native-gesture-handler';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { SwipeablePersonCard } from '@/components/ui/SwipeablePersonCard';
@@ -29,15 +29,15 @@ export default function HomeScreen() {
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
   // 各カードのrefを保持するMap
   const swipeableRefs = useRef<Map<string, any>>(new Map());
-  // スワイプが開く前に他のカードを閉じる
-  const closeOtherSwipeables = useRef<(excludeId: string) => void>();
+  // 現在開いているSwipeableのrefを管理
+  const prevOpenedRow = useRef<any>(null);
   
-  closeOtherSwipeables.current = (excludeId: string) => {
-    swipeableRefs.current.forEach((ref, id) => {
-      if (id !== excludeId && ref?.close) {
-        ref.close();
-      }
-    });
+  // 新しいスワイプが開くときに前のものを閉じる関数
+  const closeRow = (currentRef: any) => {
+    if (prevOpenedRow.current && prevOpenedRow.current !== currentRef) {
+      prevOpenedRow.current.close();
+    }
+    prevOpenedRow.current = currentRef;
   };
   
   // Jotai Atomsから状態を取得
@@ -157,22 +157,36 @@ export default function HomeScreen() {
       </ThemedView>
 
       {/* 人物一覧 */}
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />
-        }
-        onTouchStart={() => {
-          // スクロールビューの背景がタップされたら開いているスワイプを閉じる
-          if (openSwipeId) {
-            const openRef = swipeableRefs.current.get(openSwipeId);
-            openRef?.close();
-            setOpenSwipeId(null);
+      <PanGestureHandler
+        onHandlerStateChange={(event) => {
+          // 上下スワイプで削除ボタンを閉じる
+          if (event.nativeEvent.state === State.BEGAN && prevOpenedRow.current) {
+            const { velocityY, translationY } = event.nativeEvent;
+            // 上下方向のジェスチャーを検出
+            if (Math.abs(velocityY) > Math.abs(event.nativeEvent.velocityX) || Math.abs(translationY) > 10) {
+              prevOpenedRow.current.close();
+              prevOpenedRow.current = null;
+              setOpenSwipeId(null);
+            }
           }
         }}
-        testID="home-scroll-view"
       >
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />
+          }
+          onTouchStart={() => {
+            // スクロールビューの背景がタップされたら開いているスワイプを閉じる
+            if (prevOpenedRow.current) {
+              prevOpenedRow.current.close();
+              prevOpenedRow.current = null;
+              setOpenSwipeId(null);
+            }
+          }}
+          testID="home-scroll-view"
+        >
         {people.length === 0 ? (
           <ThemedView style={styles.emptyContainer}>
             <ThemedText style={styles.emptyText}>
@@ -189,16 +203,14 @@ export default function HomeScreen() {
               person={person}
               onPress={() => handlePersonDetail(person.id)}
               onDelete={() => handleSwipeDelete(person)}
-              onSwipeStartDrag={() => {
-                // ドラッグ開始時に全ての他のカードを閉じる
-                closeOtherSwipeables.current?.(person.id);
-              }}
-              onSwipeOpen={() => {
+              onSwipeOpen={(ref) => {
+                closeRow(ref);
                 setOpenSwipeId(person.id);
               }}
               onSwipeClose={() => {
                 if (openSwipeId === person.id) {
                   setOpenSwipeId(null);
+                  prevOpenedRow.current = null;
                 }
               }}
               ref={(ref) => {
@@ -211,7 +223,8 @@ export default function HomeScreen() {
             />
           ))
         )}
-      </ScrollView>
+        </ScrollView>
+      </PanGestureHandler>
     </ThemedView>
     </GestureHandlerRootView>
   );

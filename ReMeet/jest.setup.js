@@ -50,7 +50,7 @@ jest.mock('@/components/ui/SwipeablePersonCard', () => {
   const { TouchableOpacity, View, Text } = require('react-native');
   
   // forwardRefで定義されたコンポーネントのモック
-  const SwipeablePersonCard = React.forwardRef(({ person, onPress, onDelete, onSwipeOpen, onSwipeClose, onSwipeStartDrag, ...props }, ref) => {
+  const SwipeablePersonCard = React.forwardRef(({ person, onPress, onDelete, onSwipeOpen, onSwipeClose, ...props }, ref) => {
     // 元のPersonCardと同様の構造を再現
     return React.createElement(
       View,

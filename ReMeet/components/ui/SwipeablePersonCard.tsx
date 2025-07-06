@@ -14,16 +14,15 @@ interface SwipeablePersonCardProps {
   person: PersonWithRelations;
   onPress: () => void;
   onDelete: () => void;
-  onSwipeOpen?: () => void;
+  onSwipeOpen?: (ref: any) => void;
   onSwipeClose?: () => void;
-  onSwipeStartDrag?: () => void;
 }
 
 // forwardRefを使用して外部からrefを受け取れるようにする
 export const SwipeablePersonCard = React.forwardRef<
   Swipeable,
   SwipeablePersonCardProps
->(({ person, onPress, onDelete, onSwipeOpen, onSwipeClose, onSwipeStartDrag }, ref) => {
+>(({ person, onPress, onDelete, onSwipeOpen, onSwipeClose }, ref) => {
   // 内部refと外部refを統合
   const internalRef = useRef<Swipeable>(null);
   const swipeableRef = (ref as React.RefObject<Swipeable>) || internalRef;
@@ -48,9 +47,11 @@ export const SwipeablePersonCard = React.forwardRef<
       ref={typeof ref === 'object' ? ref : internalRef}
       renderRightActions={renderRightActions}
       rightThreshold={40}
-      onSwipeableOpen={onSwipeOpen}
+      onSwipeableOpen={() => {
+        const currentRef = typeof ref === 'object' && ref?.current ? ref.current : internalRef.current;
+        onSwipeOpen?.(currentRef);
+      }}
       onSwipeableClose={onSwipeClose}
-      onSwipeableOpenStartDrag={onSwipeStartDrag}  // ドラッグ開始時に呼ばれる
       testID={`swipeable-person-card-${person.id}`}
     >
       <TouchableOpacity
