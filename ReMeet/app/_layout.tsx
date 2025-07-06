@@ -4,6 +4,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Provider as JotaiProvider } from 'jotai';
 
 import { ThemeProvider } from '@/contexts/ThemeContext';
 
@@ -31,15 +32,17 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <NavigationThemeProvider value={DefaultTheme}>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-          <StatusBar style="auto" />
-        </NavigationThemeProvider>
-      </ThemeProvider>
+      <JotaiProvider>
+        <ThemeProvider>
+          <NavigationThemeProvider value={DefaultTheme}>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="+not-found" />
+            </Stack>
+            <StatusBar style="auto" />
+          </NavigationThemeProvider>
+        </ThemeProvider>
+      </JotaiProvider>
     </QueryClientProvider>
   );
 }
