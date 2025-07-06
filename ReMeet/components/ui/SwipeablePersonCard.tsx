@@ -168,8 +168,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: 80,
     height: '100%',
-    borderTopRightRadius: 12,
-    borderBottomRightRadius: 12,
+    borderRadius: 12,
   },
   deleteButtonText: {
     color: '#FFFFFF',
