@@ -5,6 +5,8 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { PersonRegistrationForm } from '@/components/forms/PersonRegistrationForm';
 import { PersonRegistrationFormData } from '@/types/forms';
+import { PersonService } from '@/database/sqlite-services';
+import type { CreatePersonData } from '@/database/sqlite-services';
 
 /**
  * 人物登録画面
@@ -31,18 +33,31 @@ export default function PersonRegisterScreen() {
 
   /**
    * フォーム送信時の処理
-   * 実際のアプリケーションではRealm DBへの保存処理を実装
+   * PersonServiceを使用した実際のデータ保存処理
    */
   const handleSubmit = async (data: PersonRegistrationFormData) => {
     setIsSubmitting(true);
 
     try {
-      // ここで実際のRealm DB保存処理を行う
-      // 今回はシミュレーションのため、1秒待機
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // フォームデータをPersonService用の形式に変換
+      const personData: CreatePersonData = {
+        name: data.name,
+        handle: data.handle || undefined,
+        company: data.company || undefined,
+        position: data.position || undefined,
+        description: data.description || undefined,
+        productName: data.productName || undefined,
+        memo: data.memo || undefined,
+        githubId: data.githubId || undefined,
+        // タグは今回は簡略化で省略（将来的に実装）
+      };
+      
+      // PersonServiceを使って人物を登録
+      const createdPerson = await PersonService.create(personData);
       
       // 送信データをコンソールに出力（デバッグ用）
       console.log('Person registration data:', data);
+      console.log('Created person:', createdPerson);
       
       // 成功メッセージを表示
       Alert.alert(
@@ -55,8 +70,9 @@ export default function PersonRegisterScreen() {
           },
         ]
       );
-    } catch {
+    } catch (error) {
       // エラー処理
+      console.error('Person registration error:', error);
       Alert.alert(
         'エラー',
         '登録中にエラーが発生しました。もう一度お試しください。',

@@ -69,11 +69,10 @@ export function PersonRegistrationForm({
       company: initialData?.company || '',
       position: initialData?.position || '',
       description: initialData?.description || '',
-      product_name: initialData?.product_name || '',
+      productName: initialData?.productName || '',
       memo: initialData?.memo || '',
-      github_id: initialData?.github_id || '',
+      githubId: initialData?.githubId || '',
       tags: initialData?.tags || '',
-      nfc_id: initialData?.nfc_id || '',
     },
   });
 
@@ -181,7 +180,7 @@ export function PersonRegistrationForm({
         {/* プロダクト名入力フィールド */}
         <Controller
           control={control}
-          name="product_name"
+          name="productName"
           render={({ field: { onChange, onBlur, value } }) => (
             <FormInput
               label="プロダクト名"
@@ -189,7 +188,7 @@ export function PersonRegistrationForm({
               value={value || ''}
               onChangeText={onChange}
               onBlur={onBlur}
-              error={errors.product_name?.message}
+              error={errors.productName?.message}
               testID="product-name-input"
             />
           )}
@@ -198,7 +197,7 @@ export function PersonRegistrationForm({
         {/* GitHub ID入力フィールド */}
         <Controller
           control={control}
-          name="github_id"
+          name="githubId"
           render={({ field: { onChange, onBlur, value } }) => (
             <FormInput
               label="GitHub ID"
@@ -206,7 +205,7 @@ export function PersonRegistrationForm({
               value={value || ''}
               onChangeText={onChange}
               onBlur={onBlur}
-              error={errors.github_id?.message}
+              error={errors.githubId?.message}
               autoCapitalize="none"
               testID="github-id-input"
               required={false}
@@ -242,24 +241,6 @@ export function PersonRegistrationForm({
               />
             );
           }}
-        />
-
-        {/* NFC ID入力フィールド */}
-        <Controller
-          control={control}
-          name="nfc_id"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <FormInput
-              label="NFC ID"
-              placeholder="システムで自動設定されます"
-              value={value || ''}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              error={errors.nfc_id?.message}
-              autoCapitalize="none"
-              testID="nfc-id-input"
-            />
-          )}
         />
 
         {/* メモ入力フィールド */}

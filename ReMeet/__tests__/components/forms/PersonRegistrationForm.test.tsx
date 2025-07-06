@@ -43,7 +43,6 @@ describe('PersonRegistrationForm', () => {
     expect(getByTestId('product-name-input')).toBeTruthy();
     expect(getByTestId('github-id-input')).toBeTruthy();
     expect(getByTestId('tags-input')).toBeTruthy();
-    expect(getByTestId('nfc-id-input')).toBeTruthy();
     expect(getByTestId('memo-input')).toBeTruthy();
   });
 
@@ -55,10 +54,9 @@ describe('PersonRegistrationForm', () => {
       company: '株式会社テスト',
       position: 'エンジニア',
       description: 'React開発者です',
-      product_name: 'テストアプリ',
-      github_id: 'yamada-taro',
+      productName: 'テストアプリ',
+      githubId: 'yamada-taro',
       tags: 'React, TypeScript',
-      nfc_id: 'nfc123',
       memo: 'テストメモ',
     };
     
@@ -73,8 +71,8 @@ describe('PersonRegistrationForm', () => {
     fireEvent.changeText(getByTestId('company-input'), validData.company);
     fireEvent.changeText(getByTestId('position-input'), validData.position);
     fireEvent.changeText(getByTestId('description-input'), validData.description);
-    fireEvent.changeText(getByTestId('product-name-input'), validData.product_name);
-    fireEvent.changeText(getByTestId('github-id-input'), validData.github_id);
+    fireEvent.changeText(getByTestId('product-name-input'), validData.productName);
+    fireEvent.changeText(getByTestId('github-id-input'), validData.githubId);
     
     // タグを入力（Enterキーで追加）
     const tags = validData.tags.split(', ');
@@ -83,7 +81,6 @@ describe('PersonRegistrationForm', () => {
       fireEvent.press(getByTestId('tags-input-add-button'));
     }
     
-    fireEvent.changeText(getByTestId('nfc-id-input'), validData.nfc_id);
     fireEvent.changeText(getByTestId('memo-input'), validData.memo);
     
     // 送信ボタンをクリック
@@ -260,7 +257,7 @@ describe('PersonRegistrationForm', () => {
     const initialData = {
       name: '初期名前',
       company: '初期会社',
-      github_id: 'initial-user',
+      githubId: 'initial-user',
       tags: 'JavaScript, Node.js',
     };
     
@@ -275,7 +272,7 @@ describe('PersonRegistrationForm', () => {
     // Assert（検証）
     expect(getByTestId('name-input').props.value).toBe(initialData.name);
     expect(getByTestId('company-input').props.value).toBe(initialData.company);
-    expect(getByTestId('github-id-input').props.value).toBe(initialData.github_id);
+    expect(getByTestId('github-id-input').props.value).toBe(initialData.githubId);
     // タグの初期値は選択済みタグとして表示される
     expect(getByTestId('tags-input').props.value).toBe(''); // 入力フィールドは空
   });
