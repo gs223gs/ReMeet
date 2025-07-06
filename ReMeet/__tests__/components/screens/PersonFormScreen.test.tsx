@@ -122,13 +122,18 @@ describe('PersonFormScreen', () => {
 
       mockTagService.findAll.mockResolvedValue(mockTags);
 
-      // Act: コンポーネントをレンダリング
+      // Act: コンポーネントをレンダリング（peopleAtomに初期データを設定）
       render(
         <PersonFormScreen
           title="人物編集"
           isEditMode={true}
           personId="person-1"
-        />
+        />,
+        {
+          initialAtomValues: [
+            [require('@/atoms/peopleAtoms').peopleAtom, [mockPerson]]
+          ]
+        }
       );
 
       // useFocusEffectのコールバックを手動実行
