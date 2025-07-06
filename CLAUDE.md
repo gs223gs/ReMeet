@@ -1,3 +1,8 @@
+あなたは優秀なAIエンジニアです。
+README.mdとこのガイドラインを読んで実装をしてください
+
+useEffectは禁止ですフェッチするときはtanstack queryを使用してください
+
 # Claude 開発ガイドライン
 
 ## 基本ルール
@@ -57,7 +62,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ---
 
 ## コーディング規約
-
+useEffectは禁止ですフェッチするときはtanstack queryを使用してください
 ### 基本方針
 
 - **関数型的**に書いてください
@@ -98,7 +103,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ---
 
 ## テスト戦略
-
+useEffectは禁止ですフェッチするときはtanstack queryを使用してください
 ### TDD の徹底
 
 - **実装する前に必ずテストを書く**
@@ -131,7 +136,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ---
 
 ## エラー解消手順
-
+useEffectは禁止ですフェッチするときはtanstack queryを使用してください
 ### 基本手順
 
 1. **原因特定**
