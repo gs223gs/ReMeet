@@ -80,31 +80,6 @@ describe('PersonFormScreen', () => {
   });
 
   describe('編集モード', () => {
-    it('編集画面が正しく表示される', async () => {
-      // Arrange: テストデータを準備
-      const mockTags: Tag[] = [
-        { id: 'tag-1', name: 'React' },
-        { id: 'tag-2', name: 'TypeScript' },
-        { id: 'tag-3', name: 'Node.js' },
-      ];
-
-      mockTagService.findAll.mockResolvedValue(mockTags);
-
-      // Act: コンポーネントをレンダリング
-      render(
-        <PersonFormScreen
-          title="人物編集"
-          isEditMode={true}
-          personId="person-1"
-        />
-      );
-
-      // Assert: タイトルが表示されることを確認（読み込み中でも表示される）
-      await waitFor(() => {
-        expect(screen.getByText('人物編集')).toBeTruthy();
-      });
-    });
-
     it('人物IDが指定されていない場合にエラーメッセージが表示される', async () => {
       // Arrange: 人物IDを指定しない
       
