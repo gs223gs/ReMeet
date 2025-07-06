@@ -1,0 +1,432 @@
+import React from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  View,
+  ActivityIndicator,
+  Alert,
+  Pressable,
+} from "react-native";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
+import { useQuery } from "@tanstack/react-query";
+import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
+import { useThemeColor } from "@/hooks/useThemeColor";
+import { PersonService } from "@/database/sqlite-services";
+import type { PersonWithRelations } from "@/database/sqlite-types";
+
+/**
+ * 人物詳細画面
+ * 選択された人物の詳細情報を表示
+ * TanStack Queryを使用してデータ管理とuseEffect禁止を実現
+ */
+export default function PersonDetailScreen() {
+  const router = useRouter();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const primaryColor = useThemeColor({}, "tint");
+  const borderColor = useThemeColor({}, "border");
+
+  // TanStack Queryを使用して人物データを取得
+  const {
+    data: person,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["person", id],
+    queryFn: async () => {
+      if (!id) {
+        throw new Error("人物IDが指定されていません");
+      }
+      try {
+        const personData = await PersonService.findById(id);
+        return personData;
+      } catch (error) {
+        console.error("人物データの取得エラー:", error);
+        throw new Error("人物データの取得に失敗しました");
+      }
+    },
+    staleTime: 1000 * 60 * 5, // 5分間キャッシュ
+    enabled: !!id, // idが存在する場合のみクエリを実行
+  });
+
+  // 画面フォーカス時にデータを再取得
+  useFocusEffect(
+    React.useCallback(() => {
+      if (id) {
+        refetch();
+      }
+    }, [refetch, id])
+  );
+
+  /**
+   * 戻るボタンの処理
+   */
+  const handleGoBack = () => {
+    router.back();
+  };
+
+  // IDが指定されていない場合のエラー
+  if (!id) {
+    return (
+      <ThemedView style={styles.container}>
+        <ThemedView style={styles.errorContainer}>
+          <ThemedText style={styles.errorText}>
+            人物IDが指定されていません
+          </ThemedText>
+          <Pressable
+            style={[styles.backButton, { backgroundColor: primaryColor }]}
+            onPress={handleGoBack}
+          >
+            <ThemedText style={styles.backButtonText}>戻る</ThemedText>
+          </Pressable>
+        </ThemedView>
+      </ThemedView>
+    );
+  }
+
+  // エラー時の表示
+  if (error) {
+    console.error("人物詳細データの読み込みに失敗しました:", error);
+    Alert.alert("エラー", "人物詳細データの読み込みに失敗しました。", [
+      { text: "OK" },
+    ]);
+    return (
+      <ThemedView style={styles.container}>
+        <ThemedView style={styles.errorContainer}>
+          <ThemedText style={styles.errorText}>
+            データの読み込みに失敗しました
+          </ThemedText>
+          <Pressable
+            style={[styles.backButton, { backgroundColor: primaryColor }]}
+            onPress={handleGoBack}
+          >
+            <ThemedText style={styles.backButtonText}>戻る</ThemedText>
+          </Pressable>
+        </ThemedView>
+      </ThemedView>
+    );
+  }
+
+  // ローディング時の表示
+  if (isLoading) {
+    return (
+      <ThemedView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" />
+          <ThemedText style={styles.loadingText}>読み込み中...</ThemedText>
+        </View>
+      </ThemedView>
+    );
+  }
+
+  // 人物データが存在しない場合
+  if (!person) {
+    return (
+      <ThemedView style={styles.container}>
+        <ThemedView style={styles.errorContainer}>
+          <ThemedText style={styles.errorText}>
+            指定された人物が見つかりません
+          </ThemedText>
+        </ThemedView>
+      </ThemedView>
+    );
+  }
+
+  return (
+    <ThemedView style={styles.container}>
+      {/* 人物詳細情報 */}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        testID="person-detail-scroll-view"
+      >
+        <PersonDetailCard person={person} borderColor={borderColor} />
+      </ScrollView>
+    </ThemedView>
+  );
+}
+
+/**
+ * 人物詳細カードコンポーネント
+ * 人物の全詳細情報を表示
+ */
+const PersonDetailCard = ({
+  person,
+  borderColor,
+}: {
+  person: PersonWithRelations;
+  borderColor: string;
+}) => (
+  <ThemedView style={[styles.detailCard, { borderColor }]}>
+    {/* 名前 */}
+    <View style={styles.nameSection}>
+      <ThemedText type="title" style={styles.personName}>
+        {person.name}
+      </ThemedText>
+      {person.handle && (
+        <ThemedText style={styles.handle}>{person.handle}</ThemedText>
+      )}
+    </View>
+
+    {/* 会社・役職 */}
+    {(person.company || person.position) && (
+      <View style={styles.workSection}>
+        <ThemedText style={styles.sectionTitle}>勤務先</ThemedText>
+        {person.company && (
+          <ThemedText style={styles.company}>🏢 {person.company}</ThemedText>
+        )}
+        {person.position && (
+          <ThemedText style={styles.position}>💼 {person.position}</ThemedText>
+        )}
+      </View>
+    )}
+
+    {/* 説明 */}
+    {person.description && (
+      <View style={styles.section}>
+        <ThemedText style={styles.sectionTitle}>説明</ThemedText>
+        <ThemedText style={styles.description}>{person.description}</ThemedText>
+      </View>
+    )}
+
+    {/* プロダクト・GitHub */}
+    {(person.productName || person.githubId) && (
+      <View style={styles.section}>
+        <ThemedText style={styles.sectionTitle}>関連情報</ThemedText>
+        {person.productName && (
+          <ThemedText style={styles.productName}>
+            📱 {person.productName}
+          </ThemedText>
+        )}
+        {person.githubId && (
+          <ThemedText style={styles.githubId}>💻 {person.githubId}</ThemedText>
+        )}
+      </View>
+    )}
+
+    {/* タグ */}
+    {person.tags && person.tags.length > 0 && (
+      <View style={styles.section}>
+        <ThemedText style={styles.sectionTitle}>タグ</ThemedText>
+        <View style={styles.tagsContainer}>
+          {person.tags.map((tag) => (
+            <View key={tag.id} style={styles.tag}>
+              <ThemedText style={styles.tagText}>{tag.name}</ThemedText>
+            </View>
+          ))}
+        </View>
+      </View>
+    )}
+
+    {/* 出会った場所・イベント */}
+    {person.events && person.events.length > 0 && (
+      <View style={styles.section}>
+        <ThemedText style={styles.sectionTitle}>
+          出会った場所・イベント
+        </ThemedText>
+        <View style={styles.eventsContainer}>
+          {person.events.map((event) => (
+            <View key={event.id} style={styles.eventCard}>
+              <ThemedText style={styles.eventName}>📅 {event.name}</ThemedText>
+              {event.date && (
+                <ThemedText style={styles.eventDate}>
+                  📆 {new Date(event.date).toLocaleDateString("ja-JP")}
+                </ThemedText>
+              )}
+              {event.location && (
+                <ThemedText style={styles.eventLocation}>
+                  📍 {event.location}
+                </ThemedText>
+              )}
+            </View>
+          ))}
+        </View>
+      </View>
+    )}
+
+    {/* メモ */}
+    {person.memo && (
+      <View style={styles.section}>
+        <ThemedText style={styles.sectionTitle}>メモ</ThemedText>
+        <ThemedText style={styles.memo}>💭 {person.memo}</ThemedText>
+      </View>
+    )}
+
+    {/* 登録日 */}
+    <View style={styles.section}>
+      <ThemedText style={styles.sectionTitle}>登録情報</ThemedText>
+      <ThemedText style={styles.date}>
+        登録日: {new Date(person.createdAt).toLocaleDateString("ja-JP")}
+      </ThemedText>
+      <ThemedText style={styles.date}>
+        更新日: {new Date(person.updatedAt).toLocaleDateString("ja-JP")}
+      </ThemedText>
+    </View>
+  </ThemedView>
+);
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  header: {
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+  },
+  backButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  backButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 16,
+    opacity: 0.6,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  errorText: {
+    fontSize: 18,
+    textAlign: "center",
+    marginBottom: 20,
+    opacity: 0.7,
+  },
+  detailCard: {
+    padding: 24,
+    borderRadius: 16,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  nameSection: {
+    marginBottom: 24,
+    alignItems: "center",
+  },
+  personName: {
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  handle: {
+    fontSize: 16,
+    opacity: 0.6,
+  },
+  section: {
+    marginBottom: 20,
+  },
+  workSection: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 8,
+    opacity: 0.8,
+  },
+  company: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 4,
+  },
+  position: {
+    fontSize: 16,
+    opacity: 0.7,
+  },
+  description: {
+    fontSize: 16,
+    lineHeight: 24,
+    opacity: 0.8,
+  },
+  productName: {
+    fontSize: 16,
+    marginBottom: 4,
+    opacity: 0.8,
+  },
+  githubId: {
+    fontSize: 16,
+    opacity: 0.8,
+  },
+  tagsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  tag: {
+    backgroundColor: "rgba(0, 122, 255, 0.1)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  tagText: {
+    fontSize: 14,
+    color: "#007AFF",
+    fontWeight: "500",
+  },
+  eventsContainer: {
+    gap: 8,
+  },
+  eventCard: {
+    backgroundColor: "rgba(76, 175, 80, 0.1)",
+    padding: 12,
+    borderRadius: 12,
+  },
+  eventName: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#4CAF50",
+    marginBottom: 4,
+  },
+  eventDate: {
+    fontSize: 14,
+    opacity: 0.7,
+    marginBottom: 2,
+  },
+  eventLocation: {
+    fontSize: 14,
+    opacity: 0.7,
+  },
+  memo: {
+    fontSize: 16,
+    lineHeight: 24,
+    opacity: 0.7,
+    fontStyle: "italic",
+  },
+  date: {
+    fontSize: 14,
+    opacity: 0.5,
+    marginBottom: 2,
+  },
+});
