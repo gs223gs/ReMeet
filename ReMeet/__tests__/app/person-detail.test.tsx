@@ -18,9 +18,13 @@ jest.mock('@/database/sqlite-services', () => ({
 
 // expo-routerのモック
 const mockLocalSearchParams = { id: 'person-1' };
+const mockPush = jest.fn();
 
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => mockLocalSearchParams,
+  useRouter: () => ({
+    push: mockPush,
+  }),
 }));
 
 // useFocusEffectのモック
@@ -36,6 +40,7 @@ const mockPersonService = PersonService as jest.Mocked<typeof PersonService>;
 describe('PersonDetailScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockPush.mockClear();
     mockUseFocusEffectCallback = null;
     // デフォルトのパラメータを設定
     (mockLocalSearchParams as any).id = 'person-1';
@@ -90,6 +95,7 @@ describe('PersonDetailScreen', () => {
         expect(screen.getByText('📍 東京国際フォーラム')).toBeTruthy();
         expect(screen.getByText('React')).toBeTruthy();
         expect(screen.getByText('TypeScript')).toBeTruthy();
+        expect(screen.getByText('編集')).toBeTruthy();
       });
 
       // 登録日・更新日の確認
@@ -334,6 +340,43 @@ describe('PersonDetailScreen', () => {
       // ScrollViewが表示されることを確認
       const scrollView = screen.getByTestId('person-detail-scroll-view');
       expect(scrollView).toBeTruthy();
+    });
+
+    it('編集ボタンをタップすると編集画面に遷移する', async () => {
+      // Arrange: テストデータを準備
+      const mockPerson: PersonWithRelations = {
+        id: 'person-1',
+        name: 'テスト太郎',
+        handle: null,
+        company: null,
+        position: null,
+        description: null,
+        productName: null,
+        memo: null,
+        githubId: null,
+        createdAt: new Date('2025-01-01'),
+        updatedAt: new Date('2025-01-01'),
+        tags: [],
+        events: [],
+        relations: [],
+      };
+
+      mockPersonService.findById.mockResolvedValue(mockPerson);
+
+      // Act: コンポーネントをレンダリング
+      render(<PersonDetailScreen />);
+
+      // Assert: 編集ボタンが表示されることを確認
+      await waitFor(() => {
+        expect(screen.getByTestId('edit-button')).toBeTruthy();
+      });
+
+      // 編集ボタンをタップ
+      const editButton = screen.getByTestId('edit-button');
+      fireEvent.press(editButton);
+
+      // Assert: 編集画面への遷移が呼ばれることを確認
+      expect(mockPush).toHaveBeenCalledWith('/person-edit?id=person-1');
     });
   });
 });
