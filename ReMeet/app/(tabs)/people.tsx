@@ -1,17 +1,20 @@
 import React from 'react';
 import { ScrollView, StyleSheet, View, ActivityIndicator, Alert, RefreshControl, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
+import { useAtom } from 'jotai';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { PersonService } from '@/database/sqlite-services';
 import type { PersonWithRelations } from '@/database/sqlite-types';
+import { peopleAtom, peopleLoadingAtom, peopleErrorAtom } from '@/atoms/peopleAtoms';
 
 /**
  * ホーム画面（人物一覧表示）
  * 登録済みの人物データを一覧表示し、追加ボタンを上部に配置
- * TanStack Queryを使用してuseEffectを使わずにデータ取得
+ * TanStack Query + Jotai を使用してデータ管理とuseEffect禁止を実現
  */
 export default function HomeScreen() {
   const router = useRouter();
@@ -19,26 +22,47 @@ export default function HomeScreen() {
   const buttonTextColor = useThemeColor({}, 'background'); // ボタンテキストは背景色の反対色
   const borderColor = useThemeColor({}, 'border'); // テーマに沿った境界線色
   
-  // TanStack Queryを使用して人物データを取得
-  const {
-    data: people = [],
-    isLoading,
-    error,
-    refetch,
-    isRefetching
-  } = useQuery({
+  // Jotai Atomsから状態を取得
+  const [people, setPeople] = useAtom(peopleAtom);
+  const [isLoading, setIsLoading] = useAtom(peopleLoadingAtom);
+  const [error, setError] = useAtom(peopleErrorAtom);
+  
+  // TanStack Queryを使用して人物データを取得（最新バージョン対応）
+  const { refetch, isRefetching } = useQuery({
     queryKey: ['people'],
     queryFn: async () => {
-      const peopleData = await PersonService.findMany();
-      return peopleData;
+      try {
+        const peopleData = await PersonService.findMany();
+        // 成功時にJotaiに保存
+        setPeople(peopleData);
+        setIsLoading(false);
+        setError(null);
+        return peopleData;
+      } catch (err) {
+        // エラー時にJotaiに保存
+        setError(err as Error);
+        setIsLoading(false);
+        throw err;
+      }
     },
     staleTime: 1000 * 60 * 5, // 5分間キャッシュ
+    enabled: false, // 手動実行のみ
   });
+
+  // 画面フォーカス時にデータをフェッチしてJotaiに保存
+  useFocusEffect(
+    React.useCallback(() => {
+      setIsLoading(true);
+      refetch();
+    }, [refetch, setIsLoading])
+  );
 
   /**
    * リフレッシュ処理
+   * 手動でデータを再取得してJotaiに保存
    */
   const onRefresh = () => {
+    setIsLoading(true);
     refetch();
   };
 

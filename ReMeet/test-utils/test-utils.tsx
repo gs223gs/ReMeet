@@ -1,10 +1,11 @@
 /**
  * テストユーティリティ
- * ThemeProviderやTanStack QueryのQueryClientProviderなど必要なProviderを提供
+ * ThemeProvider、TanStack QueryのQueryClientProvider、Jotai Providerなど必要なProviderを提供
  */
 import React from 'react';
 import { render, RenderOptions } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Provider as JotaiProvider } from 'jotai';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 
 /**
@@ -32,9 +33,11 @@ const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        {children}
-      </ThemeProvider>
+      <JotaiProvider>
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
+      </JotaiProvider>
     </QueryClientProvider>
   );
 };
