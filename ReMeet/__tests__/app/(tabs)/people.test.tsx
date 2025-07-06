@@ -384,9 +384,9 @@ describe('HomeScreen', () => {
         expect(screen.getByText('1人が登録されています')).toBeTruthy();
       });
 
-      // ScrollViewが表示されることを確認
-      const scrollView = screen.getByTestId('home-scroll-view');
-      expect(scrollView).toBeTruthy();
+      // FlatListが表示されることを確認
+      const flatList = screen.getByTestId('people-flatlist');
+      expect(flatList).toBeTruthy();
     });
   });
 });
