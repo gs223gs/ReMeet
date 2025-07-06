@@ -1,7 +1,16 @@
 /**
  * SQLiteサービスのエクスポート
  */
-export { PersonService } from './PersonService';
+export { 
+  PersonService,
+  create,
+  findById,
+  findMany,
+  count,
+  deleteById,
+  clearMockData,
+  addMockData
+} from './PersonService';
 export type { 
   CreatePersonData, 
   PersonSearchFilter

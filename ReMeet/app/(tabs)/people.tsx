@@ -1,5 +1,6 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { ScrollView, StyleSheet, View, ActivityIndicator, Alert } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { PersonService } from '@/database/sqlite-services';
@@ -36,11 +37,14 @@ export default function PeopleScreen() {
   }, []);
 
   /**
-   * 初回レンダリング時に人物データを読み込み
+   * 画面フォーカス時に人物データを読み込み
+   * useEffectの使用を避けるためuseFocusEffectを使用
    */
-  useEffect(() => {
-    loadPeople();
-  }, [loadPeople]);
+  useFocusEffect(
+    useCallback(() => {
+      loadPeople();
+    }, [loadPeople])
+  );
 
   /**
    * リフレッシュ処理

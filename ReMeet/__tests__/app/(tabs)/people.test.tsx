@@ -3,7 +3,7 @@
  * AAAパターン（Arrange, Act, Assert）でテストを構成
  */
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react-native';
+import { render, screen, waitFor, act } from '@testing-library/react-native';
 import PeopleScreen from '@/app/(tabs)/people';
 import { PersonService } from '@/database/sqlite-services';
 import type { PersonWithRelations } from '@/database/sqlite-types';
@@ -13,6 +13,16 @@ jest.mock('@/database/sqlite-services', () => ({
   PersonService: {
     findMany: jest.fn(),
   },
+}));
+
+// React Navigationのモック
+jest.mock('@react-navigation/native', () => ({
+  useFocusEffect: jest.fn((callback) => {
+    // コンポーネントがマウントされた後に実行
+    React.useEffect(() => {
+      callback();
+    }, []);
+  }),
 }));
 
 const mockPersonService = PersonService as jest.Mocked<typeof PersonService>;

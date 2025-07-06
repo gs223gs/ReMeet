@@ -99,28 +99,24 @@ let mockPersons: PersonWithRelations[] = [
 let idCounter = 4;
 
 /**
- * 人物サービスクラス
+ * IDを生成する
  */
-export class PersonService {
-  /**
-   * IDを生成する
-   */
-  private static generateId(): string {
-    return `person-${idCounter++}`;
-  }
+function generateId(): string {
+  return `person-${idCounter++}`;
+}
 
-  /**
-   * 人物を登録する
-   * @param data 登録する人物のデータ
-   * @returns 登録された人物データ
-   */
-  static async create(data: CreatePersonData): Promise<Person> {
+/**
+ * 人物を登録する
+ * @param data 登録する人物のデータ
+ * @returns 登録された人物データ
+ */
+export async function create(data: CreatePersonData): Promise<Person> {
     if (!data.name || data.name.trim() === '') {
       throw new Error('名前は必須項目です');
     }
 
     const newPerson: PersonWithRelations = {
-      id: this.generateId(),
+      id: generateId(),
       name: data.name.trim(),
       handle: data.handle || null,
       company: data.company || null,
@@ -140,22 +136,22 @@ export class PersonService {
     return newPerson;
   }
 
-  /**
-   * 人物をIDで取得する
-   * @param id 人物のID
-   * @returns 人物データ（タグ情報を含む）
-   */
-  static async findById(id: string): Promise<PersonWithRelations | null> {
+/**
+ * 人物をIDで取得する
+ * @param id 人物のID
+ * @returns 人物データ（タグ情報を含む）
+ */
+export async function findById(id: string): Promise<PersonWithRelations | null> {
     const person = mockPersons.find(p => p.id === id);
     return person || null;
   }
 
-  /**
-   * 人物一覧を取得する
-   * @param filter 検索フィルター
-   * @returns 人物データの配列
-   */
-  static async findMany(filter?: PersonSearchFilter): Promise<PersonWithRelations[]> {
+/**
+ * 人物一覧を取得する
+ * @param filter 検索フィルター
+ * @returns 人物データの配列
+ */
+export async function findMany(filter?: PersonSearchFilter): Promise<PersonWithRelations[]> {
     let filteredPersons = [...mockPersons];
 
     if (filter?.name) {
@@ -176,37 +172,49 @@ export class PersonService {
     );
   }
 
-  /**
-   * 人物の総数を取得する
-   * @returns 人物の総数
-   */
-  static async count(): Promise<number> {
+/**
+ * 人物の総数を取得する
+ * @returns 人物の総数
+ */
+export async function count(): Promise<number> {
     return mockPersons.length;
   }
 
-  /**
-   * 人物を削除する
-   * @param id 削除する人物のID
-   */
-  static async delete(id: string): Promise<void> {
+/**
+ * 人物を削除する
+ * @param id 削除する人物のID
+ */
+export async function deleteById(id: string): Promise<void> {
     const index = mockPersons.findIndex(p => p.id === id);
     if (index !== -1) {
       mockPersons.splice(index, 1);
     }
   }
 
-  /**
-   * モックデータをクリアする（テスト用）
-   */
-  static clearMockData(): void {
+/**
+ * モックデータをクリアする（テスト用）
+ */
+export function clearMockData(): void {
     mockPersons = [];
     idCounter = 1;
   }
 
-  /**
-   * モックデータを追加する（テスト用）
-   */
-  static addMockData(data: PersonWithRelations[]): void {
-    mockPersons.push(...data);
-  }
+/**
+ * モックデータを追加する（テスト用）
+ */
+export function addMockData(data: PersonWithRelations[]): void {
+  mockPersons.push(...data);
 }
+
+/**
+ * PersonServiceのエクスポート（互換性のため）
+ */
+export const PersonService = {
+  create,
+  findById,
+  findMany,
+  count,
+  delete: deleteById,
+  clearMockData,
+  addMockData,
+};
