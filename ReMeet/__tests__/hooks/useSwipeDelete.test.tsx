@@ -10,6 +10,9 @@ import { render } from '@/test-utils/test-utils';
  * useSwipeDeleteフックのテスト
  */
 
+// jest.setup.jsでuseSwipeDeleteがモックされているため、実際のフック実装をテストするためにモックを無効にする
+jest.unmock('@/hooks/useSwipeDelete');
+
 // usePersonMutationsをモック
 jest.mock('@/hooks/usePersonMutations');
 
