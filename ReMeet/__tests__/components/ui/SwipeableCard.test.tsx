@@ -1,8 +1,10 @@
 import React from 'react';
-import { fireEvent } from '@testing-library/react-native';
+import { fireEvent, act } from '@testing-library/react-native';
 import { SwipeableCard } from '@/components/ui/SwipeableCard';
 import { render } from '@/test-utils/test-utils';
 import type { PersonWithRelations } from '@/database/sqlite-types';
+import { useSetAtom } from 'jotai';
+import { openedMenuIdAtom } from '@/atoms/peopleAtoms';
 
 /**
  * SwipeableCardコンポーネントのテスト
@@ -178,6 +180,39 @@ describe('SwipeableCard', () => {
       );
 
       expect(getByText('最小データ')).toBeTruthy();
+    });
+  });
+
+  describe('Jotaiの状態管理', () => {
+    it('削除ボタンが押されたときにonDeleteが呼ばれる', () => {
+      const { getByTestId } = render(
+        <SwipeableCard
+          person={mockPerson}
+          onPress={mockOnPress}
+          onDelete={mockOnDelete}
+        />
+      );
+
+      const deleteButton = getByTestId(`delete-button-${mockPerson.id}`);
+      fireEvent.press(deleteButton);
+
+      expect(mockOnDelete).toHaveBeenCalledTimes(1);
+    });
+
+    it('非表示ボタンが押されたときにonHideが呼ばれる', () => {
+      const { getByTestId } = render(
+        <SwipeableCard
+          person={mockPerson}
+          onPress={mockOnPress}
+          onDelete={mockOnDelete}
+          onHide={mockOnHide}
+        />
+      );
+
+      const hideButton = getByTestId(`hide-button-${mockPerson.id}`);
+      fireEvent.press(hideButton);
+
+      expect(mockOnHide).toHaveBeenCalledTimes(1);
     });
   });
 });
