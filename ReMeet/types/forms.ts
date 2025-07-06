@@ -77,7 +77,7 @@ export const personRegistrationSchema = z.object({
     .optional(),
   
   // プロダクト名: 任意、100文字以内
-  product_name: z
+  productName: z
     .string()
     .max(100, 'プロダクト名は100文字以内で入力してください')
     .optional(),
@@ -89,7 +89,7 @@ export const personRegistrationSchema = z.object({
     .optional(),
   
   // GitHub ID: 任意、GitHubのusername制約に準拠
-  github_id: z
+  githubId: z
     .string()
     .refine(
       (value) => {
@@ -119,12 +119,6 @@ export const personRegistrationSchema = z.object({
   tags: z
     .string()
     .max(200, 'タグは200文字以内で入力してください')
-    .optional(),
-
-  // NFC ID: 任意、システムで自動設定されることもある
-  nfc_id: z
-    .string()
-    .max(50, 'NFC IDは50文字以内で入力してください')
     .optional(),
 });
 
