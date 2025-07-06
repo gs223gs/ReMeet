@@ -237,14 +237,16 @@ export function PersonFormScreen({
   return (
     <ThemedView style={{ flex: 1 }}>
       {/* ヘッダー */}
-      <ThemedView style={{ paddingTop: 60, paddingHorizontal: 20, paddingBottom: 20 }}>
-        <ThemedText type="title">{title}</ThemedText>
-        {description && (
-          <ThemedText style={{ marginTop: 8, opacity: 0.6 }}>
-            {description}
-          </ThemedText>
-        )}
-      </ThemedView>
+      {title && (
+        <ThemedView style={{ paddingTop: 60, paddingHorizontal: 20, paddingBottom: 20 }}>
+          <ThemedText type="title">{title}</ThemedText>
+          {description && (
+            <ThemedText style={{ marginTop: 8, opacity: 0.6 }}>
+              {description}
+            </ThemedText>
+          )}
+        </ThemedView>
+      )}
 
       {/* 人物フォーム */}
       <PersonForm

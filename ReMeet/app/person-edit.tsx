@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLocalSearchParams } from 'expo-router';
+import { Stack } from 'expo-router';
 import { PersonFormScreen } from '@/components/screens/PersonFormScreen';
 
 /**
@@ -11,10 +12,17 @@ export default function PersonEditScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   return (
-    <PersonFormScreen
-      title="人物編集"
-      isEditMode={true}
-      personId={id}
-    />
+    <>
+      <Stack.Screen
+        options={{
+          title: '編集',
+        }}
+      />
+      <PersonFormScreen
+        title=""
+        isEditMode={true}
+        personId={id}
+      />
+    </>
   );
 }
