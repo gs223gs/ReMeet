@@ -1,10 +1,12 @@
 import { StyleSheet, Text, type TextProps } from 'react-native';
 
 import { useThemeColor } from '@/hooks/useThemeColor';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
+  githubColor?: string;
   type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
 };
 
@@ -12,10 +14,17 @@ export function ThemedText({
   style,
   lightColor,
   darkColor,
+  githubColor,
   type = 'default',
   ...rest
 }: ThemedTextProps) {
-  const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
+  const color = useThemeColor({ light: lightColor, dark: darkColor, github: githubColor }, 'text');
+  const { colorScheme } = useColorScheme();
+  
+  // linkタイプの場合、テーマに応じたリンクカラーを使用
+  const tintColor = useThemeColor({}, 'tint');
+  const primaryBlueColor = colorScheme === 'github' ? '#0366d6' : tintColor;
+  const linkColor = colorScheme === 'github' ? primaryBlueColor : tintColor;
 
   return (
     <Text
@@ -25,7 +34,7 @@ export function ThemedText({
         type === 'title' ? styles.title : undefined,
         type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
         type === 'subtitle' ? styles.subtitle : undefined,
-        type === 'link' ? styles.link : undefined,
+        type === 'link' ? [styles.link, { color: linkColor }] : undefined,
         style,
       ]}
       {...rest}

@@ -1,11 +1,24 @@
 import React from 'react';
-import { StyleSheet, Button, ScrollView } from 'react-native';
+import { StyleSheet, Button, ScrollView, View, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { useColorScheme, ColorSchemeType } from '@/hooks/useColorScheme';
+import { useThemeColor } from '@/hooks/useThemeColor';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { colorScheme, toggleColorScheme } = useColorScheme();
+  const textColor = useThemeColor({}, 'text');
+  const buttonBackgroundColor = useThemeColor({}, 'buttonBackground');
+  const buttonTextColor = useThemeColor({}, 'buttonText');
+  const borderColor = useThemeColor({}, 'border');
+  
+  const themes: { value: ColorSchemeType; label: string }[] = [
+    { value: 'light', label: 'ライト' },
+    { value: 'dark', label: 'ダーク' },
+    { value: 'github', label: 'GitHub' },
+  ];
   
   return (
     <ThemedView style={styles.container}>
@@ -16,6 +29,39 @@ export default function HomeScreen() {
           <ThemedText style={styles.subtitle}>
             出会った人の情報を記録・管理するアプリ
           </ThemedText>
+        </ThemedView>
+        
+        {/* テーマ選択 */}
+        <ThemedView style={styles.section}>
+          <ThemedText type="subtitle" style={styles.sectionTitle}>
+            テーマ選択
+          </ThemedText>
+          
+          <View style={styles.themeSelector}>
+            {themes.map((theme) => (
+              <TouchableOpacity
+                key={theme.value}
+                style={[
+                  styles.themeButton,
+                  {
+                    backgroundColor: colorScheme === theme.value ? buttonBackgroundColor : 'transparent',
+                    borderColor: borderColor,
+                    borderWidth: 1,
+                  }
+                ]}
+                onPress={() => toggleColorScheme(theme.value)}
+              >
+                <ThemedText 
+                  style={[
+                    styles.themeButtonText,
+                    { color: colorScheme === theme.value ? buttonTextColor : textColor }
+                  ]}
+                >
+                  {theme.label}
+                </ThemedText>
+              </TouchableOpacity>
+            ))}
+          </View>
         </ThemedView>
 
         {/* メイン機能 */}
@@ -112,6 +158,21 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     marginBottom: 16,
+  },
+  themeSelector: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  themeButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    flex: 1,
+    alignItems: 'center',
+  },
+  themeButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   card: {
     padding: 16,

@@ -1,17 +1,18 @@
 /**
- * Learn more about light and dark modes:
- * https://docs.expo.dev/guides/color-schemes/
+ * テーマカラーを取得するカスタムフック
+ * light、dark、githubの3つのテーマに対応
  */
 
 import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { useColorScheme, ColorSchemeType } from '@/hooks/useColorScheme';
 
 export function useThemeColor(
-  props: { light?: string; dark?: string },
-  colorName: keyof typeof Colors.light & keyof typeof Colors.dark
+  props: { light?: string; dark?: string; github?: string },
+  colorName: keyof typeof Colors.light & keyof typeof Colors.dark & keyof typeof Colors.github
 ) {
-  const theme = useColorScheme() ?? 'light';
-  const colorFromProps = props[theme];
+  const { colorScheme } = useColorScheme();
+  const theme = colorScheme ?? 'light';
+  const colorFromProps = props[theme as keyof typeof props];
 
   if (colorFromProps) {
     return colorFromProps;
