@@ -51,7 +51,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 1. コーディング前に必ずブランチを作成してください
 2. コーディング後は必ず PR を作成してください
-3. PR には `npm start --tunnel` を実行した結果を添付してください
+3. PR には `npm start --tunnel` を実行した時に出力されてるQRを添付してください
 4. PR には必ずコードの説明を書いてください
 
 ---
@@ -65,6 +65,8 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - **型安全を最重視**
 - **現場に即した実装**を行う
 
+### クラスについて
+- クラスベースは絶対に使用しないでください
 ### 型安全ルール
 
 - **any は絶対に使わない**
