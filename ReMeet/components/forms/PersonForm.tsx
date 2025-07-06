@@ -47,18 +47,24 @@ export function PersonForm({
 }: PersonFormProps) {
   
   // フォーム送信時に新規タグを登録
-  const handleFormSubmit = (data: PersonRegistrationFormData) => {
-    // 入力されたタグから新規タグを抽出
-    if (data.tags && onNewTagsAdded) {
-      const inputTags = data.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
-      const newTags = inputTags.filter(tag => !availableTags.includes(tag));
-      
-      if (newTags.length > 0) {
-        onNewTagsAdded(newTags);
+  const handleFormSubmit = async (data: PersonRegistrationFormData) => {
+    try {
+      // 入力されたタグから新規タグを抽出して先に処理
+      if (data.tags && onNewTagsAdded) {
+        const inputTags = data.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+        const newTags = inputTags.filter(tag => !availableTags.includes(tag));
+        
+        if (newTags.length > 0) {
+          console.log('新規タグを作成中:', newTags);
+          await onNewTagsAdded(newTags);
+        }
       }
+      
+      onSubmit(data);
+    } catch (error) {
+      console.error('Form submission error:', error);
+      onSubmit(data); // エラーが発生しても送信は続行
     }
-    
-    onSubmit(data);
   };
 
   // react-hook-formの設定
