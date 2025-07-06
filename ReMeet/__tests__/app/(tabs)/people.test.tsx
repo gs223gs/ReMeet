@@ -94,15 +94,9 @@ describe('HomeScreen', () => {
         }
       });
 
-      // Assert: 人物データが表示されることを確認
+      // Assert: 人物データ（簡潔版）が表示されることを確認
       await waitFor(() => {
         expect(screen.getByText('山田太郎')).toBeTruthy();
-        expect(screen.getByText('@yamada_taro')).toBeTruthy();
-        expect(screen.getByText('株式会社テスト')).toBeTruthy();
-        expect(screen.getByText('エンジニア')).toBeTruthy();
-        expect(screen.getByText('📱 テストアプリ')).toBeTruthy();
-        expect(screen.getByText('💻 yamada-taro')).toBeTruthy();
-        expect(screen.getByText('💭 メモです')).toBeTruthy();
         expect(screen.getByText('📅 React Conference 2024')).toBeTruthy();
         expect(screen.getByText('📍 東京国際フォーラム')).toBeTruthy();
         expect(screen.getByText('React')).toBeTruthy();
@@ -111,7 +105,6 @@ describe('HomeScreen', () => {
 
       await waitFor(() => {
         expect(screen.getByText('佐藤花子')).toBeTruthy();
-        expect(screen.getByText('株式会社サンプル')).toBeTruthy();
       });
 
       // 人数表示の確認
@@ -234,12 +227,11 @@ describe('HomeScreen', () => {
         expect(screen.getByText('1人が登録されています')).toBeTruthy();
       });
 
-      // オプション項目は表示されないことを確認
+      // 簡潔版では表示されない項目を確認（handle、company、positionなど）
+      expect(screen.queryByText('@')).toBeNull();
       expect(screen.queryByText('📱')).toBeNull();
       expect(screen.queryByText('💻')).toBeNull();
       expect(screen.queryByText('💭')).toBeNull();
-      expect(screen.queryByText('📅')).toBeNull();
-      expect(screen.queryByText('📍')).toBeNull();
     });
 
     it('タグが複数ある場合に正しく表示される', async () => {
