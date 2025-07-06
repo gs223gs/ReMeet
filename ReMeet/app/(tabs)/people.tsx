@@ -84,52 +84,17 @@ export default function HomeScreen() {
   }
 
   /**
-   * 人物カードコンポーネント
-   * 各人物の情報を表示するカード
+   * 人物カードコンポーネント（簡潔版）
+   * 名前、タグ、どこであったかのみ表示
    */
   const PersonCard = ({ person }: { person: PersonWithRelations }) => (
     <ThemedView style={styles.personCard}>
-      {/* 名前とハンドル */}
+      {/* 名前 */}
       <View style={styles.nameContainer}>
         <ThemedText type="subtitle" style={styles.name}>
           {person.name}
         </ThemedText>
-        {person.handle && (
-          <ThemedText style={styles.handle}>
-            {person.handle}
-          </ThemedText>
-        )}
       </View>
-
-      {/* 会社・役職 */}
-      {(person.company || person.position) && (
-        <View style={styles.workContainer}>
-          {person.company && (
-            <ThemedText style={styles.company}>
-              {person.company}
-            </ThemedText>
-          )}
-          {person.position && (
-            <ThemedText style={styles.position}>
-              {person.position}
-            </ThemedText>
-          )}
-        </View>
-      )}
-
-      {/* プロダクト名 */}
-      {person.productName && (
-        <ThemedText style={styles.productName}>
-          📱 {person.productName}
-        </ThemedText>
-      )}
-
-      {/* GitHub ID */}
-      {person.githubId && (
-        <ThemedText style={styles.githubId}>
-          💻 {person.githubId}
-        </ThemedText>
-      )}
 
       {/* タグ */}
       {person.tags && person.tags.length > 0 && (
@@ -152,11 +117,6 @@ export default function HomeScreen() {
               <ThemedText style={styles.eventName}>
                 📅 {event.name}
               </ThemedText>
-              {event.date && (
-                <ThemedText style={styles.eventDate}>
-                  {new Date(event.date).toLocaleDateString('ja-JP')}
-                </ThemedText>
-              )}
               {event.location && (
                 <ThemedText style={styles.eventLocation}>
                   📍 {event.location}
@@ -166,18 +126,6 @@ export default function HomeScreen() {
           ))}
         </View>
       )}
-
-      {/* メモ（その人の特徴） */}
-      {person.memo && (
-        <ThemedText style={styles.memo} numberOfLines={2}>
-          💭 {person.memo}
-        </ThemedText>
-      )}
-
-      {/* 登録日 */}
-      <ThemedText style={styles.date}>
-        登録日: {new Date(person.createdAt).toLocaleDateString('ja-JP')}
-      </ThemedText>
     </ThemedView>
   );
 
@@ -346,45 +294,16 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   nameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   name: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginRight: 8,
-  },
-  handle: {
-    opacity: 0.6,
-    fontSize: 14,
-  },
-  workContainer: {
-    marginBottom: 8,
-  },
-  company: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  position: {
-    opacity: 0.7,
-    fontSize: 14,
-  },
-  productName: {
-    fontSize: 14,
-    marginBottom: 4,
-    opacity: 0.8,
-  },
-  githubId: {
-    fontSize: 14,
-    marginBottom: 8,
-    opacity: 0.8,
   },
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   tag: {
     backgroundColor: 'rgba(0, 122, 255, 0.1)',
@@ -399,19 +318,8 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontWeight: '500',
   },
-  memo: {
-    fontSize: 14,
-    opacity: 0.7,
-    marginBottom: 8,
-    fontStyle: 'italic',
-  },
-  date: {
-    fontSize: 12,
-    opacity: 0.5,
-    textAlign: 'right',
-  },
   eventsContainer: {
-    marginBottom: 8,
+    // marginBottomを削除して最後の要素として扱う
   },
   eventCard: {
     backgroundColor: 'rgba(76, 175, 80, 0.1)',
@@ -423,11 +331,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#4CAF50',
-    marginBottom: 2,
-  },
-  eventDate: {
-    fontSize: 12,
-    opacity: 0.7,
     marginBottom: 2,
   },
   eventLocation: {
