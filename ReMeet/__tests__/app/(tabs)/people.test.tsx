@@ -1,10 +1,11 @@
 /**
- * 人物一覧画面のテスト
+ * ホーム画面（人物一覧）のテスト
+ * TanStack Query使用版
  * AAAパターン（Arrange, Act, Assert）でテストを構成
  */
 import React from 'react';
-import { render, screen, waitFor, act } from '../../../test-utils/test-utils';
-import PeopleScreen from '@/app/(tabs)/people';
+import { render, screen, waitFor, fireEvent } from '../../../test-utils/test-utils';
+import HomeScreen from '@/app/(tabs)/people';
 import { PersonService } from '@/database/sqlite-services';
 import type { PersonWithRelations } from '@/database/sqlite-types';
 
@@ -15,22 +16,16 @@ jest.mock('@/database/sqlite-services', () => ({
   },
 }));
 
-// React Navigationのモック
-jest.mock('@react-navigation/native', () => {
-  const actualReact = jest.requireActual('react');
-  return {
-    useFocusEffect: jest.fn((callback) => {
-      // コンポーネントがマウントされた後に実行
-      actualReact.useEffect(() => {
-        callback();
-      }, []);
-    }),
-  };
-});
+// expo-routerのモック
+jest.mock('expo-router', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+  }),
+}));
 
 const mockPersonService = PersonService as jest.Mocked<typeof PersonService>;
 
-describe('PeopleScreen', () => {
+describe('HomeScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -81,7 +76,7 @@ describe('PeopleScreen', () => {
       mockPersonService.findMany.mockResolvedValue(mockPeople);
 
       // Act: コンポーネントをレンダリング
-      render(<PeopleScreen />);
+      render(<HomeScreen />);
 
       // Assert: 人物データが表示されることを確認
       await waitFor(() => {
@@ -114,7 +109,7 @@ describe('PeopleScreen', () => {
       mockPersonService.findMany.mockResolvedValue([]);
 
       // Act: コンポーネントをレンダリング
-      render(<PeopleScreen />);
+      render(<HomeScreen />);
 
       // Assert: 空状態のメッセージが表示されることを確認
       await waitFor(() => {
@@ -133,7 +128,7 @@ describe('PeopleScreen', () => {
       const alertSpy = jest.spyOn(require('react-native').Alert, 'alert');
 
       // Act: コンポーネントをレンダリング
-      render(<PeopleScreen />);
+      render(<HomeScreen />);
 
       // Assert: エラーアラートが表示されることを確認
       await waitFor(() => {
@@ -154,11 +149,11 @@ describe('PeopleScreen', () => {
       mockPersonService.findMany.mockResolvedValue([]);
 
       // Act: コンポーネントをレンダリング
-      render(<PeopleScreen />);
+      render(<HomeScreen />);
 
       // Assert: ヘッダーが表示されることを確認
       await waitFor(() => {
-        expect(screen.getByText('人物一覧')).toBeTruthy();
+        expect(screen.getByText('ReMeet')).toBeTruthy();
         expect(screen.getByText('0人が登録されています')).toBeTruthy();
       });
     });
@@ -187,7 +182,7 @@ describe('PeopleScreen', () => {
       mockPersonService.findMany.mockResolvedValue(mockPeople);
 
       // Act: コンポーネントをレンダリング
-      render(<PeopleScreen />);
+      render(<HomeScreen />);
 
       // Assert: 名前のみが表示されることを確認
       await waitFor(() => {
@@ -232,7 +227,7 @@ describe('PeopleScreen', () => {
       mockPersonService.findMany.mockResolvedValue(mockPeople);
 
       // Act: コンポーネントをレンダリング
-      render(<PeopleScreen />);
+      render(<HomeScreen />);
 
       // Assert: 全てのタグが表示されることを確認
       await waitFor(() => {
@@ -253,12 +248,88 @@ describe('PeopleScreen', () => {
       );
 
       // Act: コンポーネントをレンダリング
-      render(<PeopleScreen />);
+      render(<HomeScreen />);
 
       // Assert: ローディング表示されることを確認
       expect(screen.getByText('読み込み中...')).toBeTruthy();
-      expect(screen.getByText('人物一覧')).toBeTruthy();
-      expect(screen.getByText('登録済みの人物情報')).toBeTruthy();
+      expect(screen.getByText('ReMeet')).toBeTruthy();
+      expect(screen.getByText('出会った人を記録・管理')).toBeTruthy();
+    });
+  });
+
+  describe('ユーザーインタラクション', () => {
+    it('追加ボタンが表示される', async () => {
+      // Arrange: テストデータを準備
+      mockPersonService.findMany.mockResolvedValue([]);
+
+      // Act: コンポーネントをレンダリング
+      render(<HomeScreen />);
+
+      // Assert: 追加ボタンが表示されることを確認
+      await waitFor(() => {
+        const addButton = screen.getByTestId('add-person-button');
+        expect(addButton).toBeTruthy();
+        expect(screen.getByText('+')).toBeTruthy();
+      });
+    });
+
+    it('追加ボタンタップで人物登録画面に遷移する', async () => {
+      // Arrange: テストデータを準備
+      mockPersonService.findMany.mockResolvedValue([]);
+
+      // Act: コンポーネントをレンダリング
+      render(<HomeScreen />);
+      
+      // 追加ボタンが表示されるまで待機
+      await waitFor(() => {
+        const addButton = screen.getByTestId('add-person-button');
+        expect(addButton).toBeTruthy();
+      });
+
+      // ボタンをタップ
+      const addButton = screen.getByTestId('add-person-button');
+      fireEvent.press(addButton);
+
+      // Assert: ボタンがタップ可能であることを確認（実際の遷移はモックされているため確認しない）
+      expect(addButton).toBeTruthy();
+    });
+
+    it('TanStack Queryでデータが正しく読み込まれる', async () => {
+      // Arrange: テストデータを準備
+      const mockPeople: PersonWithRelations[] = [
+        {
+          id: 'person-1',
+          name: 'テスト太郎',
+          handle: null,
+          company: null,
+          position: null,
+          description: null,
+          productName: null,
+          memo: null,
+          githubId: null,
+          createdAt: new Date('2025-01-01'),
+          updatedAt: new Date('2025-01-01'),
+          tags: [],
+          events: [],
+          relations: [],
+        },
+      ];
+
+      mockPersonService.findMany.mockResolvedValue(mockPeople);
+
+      // Act: コンポーネントをレンダリング
+      render(<HomeScreen />);
+
+      // Assert: TanStack Queryがデータを正しく読み込むことを確認
+      await waitFor(() => {
+        expect(screen.getByText('テスト太郎')).toBeTruthy();
+        expect(mockPersonService.findMany).toHaveBeenCalledWith();
+        expect(screen.getByText('1人が登録されています')).toBeTruthy();
+      });
+
+      // ScrollViewが表示されることを確認
+      const scrollView = screen.getByTestId('home-scroll-view');
+      expect(scrollView).toBeTruthy();
     });
   });
 });

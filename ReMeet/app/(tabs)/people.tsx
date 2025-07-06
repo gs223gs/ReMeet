@@ -1,59 +1,63 @@
-import React, { useState, useCallback } from 'react';
-import { ScrollView, StyleSheet, View, ActivityIndicator, Alert, RefreshControl } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import React from 'react';
+import { ScrollView, StyleSheet, View, ActivityIndicator, Alert, RefreshControl, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
+import { useThemeColor } from '@/hooks/useThemeColor';
 import { PersonService } from '@/database/sqlite-services';
 import type { PersonWithRelations } from '@/database/sqlite-types';
 
 /**
- * 人物一覧表示画面
- * 登録済みの人物データを一覧表示し、検索・フィルタリング機能を提供
+ * ホーム画面（人物一覧表示）
+ * 登録済みの人物データを一覧表示し、追加ボタンを上部に配置
+ * TanStack Queryを使用してuseEffectを使わずにデータ取得
  */
-export default function PeopleScreen() {
-  const [people, setPeople] = useState<PersonWithRelations[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-
-  /**
-   * 人物データを読み込む
-   * データベースから全ての人物データを取得
-   */
-  const loadPeople = useCallback(async () => {
-    try {
-      setIsLoading(true);
+export default function HomeScreen() {
+  const router = useRouter();
+  const primaryColor = useThemeColor({}, 'tint');
+  const buttonTextColor = useThemeColor({}, 'background'); // ボタンテキストは背景色の反対色
+  const borderColor = useThemeColor({}, 'border'); // テーマに沿った境界線色
+  
+  // TanStack Queryを使用して人物データを取得
+  const {
+    data: people = [],
+    isLoading,
+    error,
+    refetch,
+    isRefetching
+  } = useQuery({
+    queryKey: ['people'],
+    queryFn: async () => {
       const peopleData = await PersonService.findMany();
-      setPeople(peopleData);
-    } catch (error) {
-      console.error('人物データの読み込みに失敗しました:', error);
-      Alert.alert(
-        'エラー',
-        '人物データの読み込みに失敗しました。',
-        [{ text: 'OK' }]
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  /**
-   * 画面フォーカス時に人物データを読み込み
-   * useEffectの使用を避けるためuseFocusEffectを使用
-   */
-  useFocusEffect(
-    useCallback(() => {
-      loadPeople();
-    }, [loadPeople])
-  );
+      return peopleData;
+    },
+    staleTime: 1000 * 60 * 5, // 5分間キャッシュ
+  });
 
   /**
    * リフレッシュ処理
    */
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await loadPeople();
-    setRefreshing(false);
+  const onRefresh = () => {
+    refetch();
   };
+
+  /**
+   * 人物登録画面への遷移
+   */
+  const handleAddPerson = () => {
+    router.push('/person-register');
+  };
+
+  // エラー時の表示
+  if (error) {
+    console.error('人物データの読み込みに失敗しました:', error);
+    Alert.alert(
+      'エラー',
+      '人物データの読み込みに失敗しました。',
+      [{ text: 'OK' }]
+    );
+  }
 
   /**
    * 人物カードコンポーネント
@@ -157,9 +161,9 @@ export default function PeopleScreen() {
     return (
       <ThemedView style={styles.container}>
         <ThemedView style={styles.header}>
-          <ThemedText type="title">人物一覧</ThemedText>
+          <ThemedText type="title">ReMeet</ThemedText>
           <ThemedText style={styles.subtitle}>
-            登録済みの人物情報
+            出会った人を記録・管理
           </ThemedText>
         </ThemedView>
         <View style={styles.loadingContainer}>
@@ -174,12 +178,29 @@ export default function PeopleScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      {/* ヘッダー */}
+      {/* ヘッダーと追加ボタン */}
       <ThemedView style={styles.header}>
-        <ThemedText type="title">人物一覧</ThemedText>
-        <ThemedText style={styles.subtitle}>
-          {people.length}人が登録されています
-        </ThemedText>
+        <View style={styles.headerContent}>
+          <View style={styles.titleContainer}>
+            <ThemedText type="title">ReMeet</ThemedText>
+            <ThemedText style={styles.subtitle}>
+              {people.length}人が登録されています
+            </ThemedText>
+          </View>
+          <Pressable
+            style={[
+              styles.addButton, 
+              { 
+                backgroundColor: primaryColor,
+                borderColor: borderColor
+              }
+            ]}
+            onPress={handleAddPerson}
+            testID="add-person-button"
+          >
+            <ThemedText style={[styles.addButtonText, { color: buttonTextColor }]}>+</ThemedText>
+          </Pressable>
+        </View>
       </ThemedView>
 
       {/* 人物一覧 */}
@@ -187,8 +208,9 @@ export default function PeopleScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />
         }
+        testID="home-scroll-view"
       >
         {people.length === 0 ? (
           <ThemedView style={styles.emptyContainer}>
@@ -218,9 +240,40 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  titleContainer: {
+    flex: 1,
+  },
   subtitle: {
     marginTop: 8,
     opacity: 0.6,
+  },
+  addButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+    // テーマに沿った境界線
+    borderWidth: 2,
+  },
+  addButtonText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    lineHeight: 28,
   },
   scrollView: {
     flex: 1,
