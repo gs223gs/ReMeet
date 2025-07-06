@@ -19,11 +19,13 @@ jest.mock('@/database/sqlite-services', () => ({
 // expo-routerのモック
 const mockLocalSearchParams = { id: 'person-1' };
 const mockPush = jest.fn();
+const mockBack = jest.fn();
 
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => mockLocalSearchParams,
   useRouter: () => ({
     push: mockPush,
+    back: mockBack,
   }),
 }));
 
@@ -41,6 +43,7 @@ describe('PersonDetailScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockPush.mockClear();
+    mockBack.mockClear();
     mockUseFocusEffectCallback = null;
     // デフォルトのパラメータを設定
     (mockLocalSearchParams as any).id = 'person-1';
@@ -96,6 +99,8 @@ describe('PersonDetailScreen', () => {
         expect(screen.getByText('React')).toBeTruthy();
         expect(screen.getByText('TypeScript')).toBeTruthy();
         expect(screen.getByText('編集')).toBeTruthy();
+        expect(screen.getByText('＜')).toBeTruthy();
+        expect(screen.getByText('(tabs)')).toBeTruthy();
       });
 
       // 登録日・更新日の確認
@@ -377,6 +382,43 @@ describe('PersonDetailScreen', () => {
 
       // Assert: 編集画面への遷移が呼ばれることを確認
       expect(mockPush).toHaveBeenCalledWith('/person-edit?id=person-1');
+    });
+
+    it('戻るボタンをタップすると前の画面に戻る', async () => {
+      // Arrange: テストデータを準備
+      const mockPerson: PersonWithRelations = {
+        id: 'person-1',
+        name: 'テスト太郎',
+        handle: null,
+        company: null,
+        position: null,
+        description: null,
+        productName: null,
+        memo: null,
+        githubId: null,
+        createdAt: new Date('2025-01-01'),
+        updatedAt: new Date('2025-01-01'),
+        tags: [],
+        events: [],
+        relations: [],
+      };
+
+      mockPersonService.findById.mockResolvedValue(mockPerson);
+
+      // Act: コンポーネントをレンダリング
+      render(<PersonDetailScreen />);
+
+      // Assert: 戻るボタンが表示されることを確認
+      await waitFor(() => {
+        expect(screen.getByTestId('back-button')).toBeTruthy();
+      });
+
+      // 戻るボタンをタップ
+      const backButton = screen.getByTestId('back-button');
+      fireEvent.press(backButton);
+
+      // Assert: 前の画面への戻りが呼ばれることを確認
+      expect(mockBack).toHaveBeenCalled();
     });
   });
 });

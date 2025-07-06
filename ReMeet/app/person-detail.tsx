@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useFocusEffect } from "@react-navigation/native";
+import { Stack } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
@@ -50,14 +50,6 @@ export default function PersonDetailScreen() {
     enabled: !!id, // idが存在する場合のみクエリを実行
   });
 
-  // 画面フォーカス時にデータを再取得
-  useFocusEffect(
-    React.useCallback(() => {
-      if (id) {
-        refetch();
-      }
-    }, [refetch, id])
-  );
 
   // IDが指定されていない場合のエラー
   if (!id) {
@@ -115,30 +107,44 @@ export default function PersonDetailScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      {/* ヘッダー部分 */}
-      <ThemedView style={styles.header}>
-        <ThemedText type="title" style={styles.headerTitle}>
-          {person.name}
-        </ThemedText>
-        <TouchableOpacity
-          style={styles.editButton}
-          onPress={() => router.push(`/person-edit?id=${id}`)}
-          testID="edit-button"
+    <>
+      <Stack.Screen
+        options={{
+          title: person.name,
+          headerLeft: () => (
+            <View style={styles.headerLeft}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => router.back()}
+                testID="back-button"
+              >
+                <ThemedText style={styles.backButtonText}>＜</ThemedText>
+              </TouchableOpacity>
+              <ThemedText style={styles.tabsText}>(tabs)</ThemedText>
+            </View>
+          ),
+          headerRight: () => (
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={() => router.push(`/person-edit?id=${id}`)}
+              testID="edit-button"
+            >
+              <ThemedText style={styles.editButtonText}>編集</ThemedText>
+            </TouchableOpacity>
+          ),
+        }}
+      />
+      <ThemedView style={styles.container}>
+        {/* 人物詳細情報 */}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          testID="person-detail-scroll-view"
         >
-          <ThemedText style={styles.editButtonText}>編集</ThemedText>
-        </TouchableOpacity>
+          <PersonDetailCard person={person} borderColor={borderColor} />
+        </ScrollView>
       </ThemedView>
-      
-      {/* 人物詳細情報 */}
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        testID="person-detail-scroll-view"
-      >
-        <PersonDetailCard person={person} borderColor={borderColor} />
-      </ScrollView>
-    </ThemedView>
+    </>
   );
 }
 
@@ -262,26 +268,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
+  headerLeft: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
   },
-  headerTitle: {
-    fontSize: 24,
+  backButton: {
+    padding: 4,
+    marginRight: 8,
+  },
+  backButtonText: {
+    fontSize: 18,
     fontWeight: 'bold',
+    color: '#007AFF',
+  },
+  tabsText: {
+    fontSize: 16,
+    color: '#007AFF',
   },
   editButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    padding: 8,
   },
   editButtonText: {
-    color: 'white',
+    color: '#007AFF',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -290,6 +298,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
+    paddingTop: 20,
     paddingBottom: 40,
   },
   loadingContainer: {
