@@ -53,3 +53,4 @@ const customRender = (
 
 export * from '@testing-library/react-native';
 export { customRender as render };
+export { AllTheProviders as TestProviders };
