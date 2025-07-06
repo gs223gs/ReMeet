@@ -73,6 +73,13 @@ export default function HomeScreen() {
     router.push('/person-register');
   };
 
+  /**
+   * 人物詳細画面への遷移
+   */
+  const handlePersonDetail = (personId: string) => {
+    router.push(`/person-detail?id=${personId}`);
+  };
+
   // エラー時の表示
   if (error) {
     console.error('人物データの読み込みに失敗しました:', error);
@@ -86,47 +93,54 @@ export default function HomeScreen() {
   /**
    * 人物カードコンポーネント（簡潔版）
    * 名前、タグ、どこであったかのみ表示
+   * タップで人物詳細画面に遷移
    */
   const PersonCard = ({ person }: { person: PersonWithRelations }) => (
-    <ThemedView style={styles.personCard}>
-      {/* 名前 */}
-      <View style={styles.nameContainer}>
-        <ThemedText type="subtitle" style={styles.name}>
-          {person.name}
-        </ThemedText>
-      </View>
-
-      {/* タグ */}
-      {person.tags && person.tags.length > 0 && (
-        <View style={styles.tagsContainer}>
-          {person.tags.map((tag) => (
-            <View key={tag.id} style={styles.tag}>
-              <ThemedText style={styles.tagText}>
-                {tag.name}
-              </ThemedText>
-            </View>
-          ))}
+    <Pressable
+      style={styles.personCard}
+      onPress={() => handlePersonDetail(person.id)}
+      testID={`person-card-${person.id}`}
+    >
+      <ThemedView style={styles.personCardContent}>
+        {/* 名前 */}
+        <View style={styles.nameContainer}>
+          <ThemedText type="subtitle" style={styles.name}>
+            {person.name}
+          </ThemedText>
         </View>
-      )}
 
-      {/* 出会った場所・イベント */}
-      {person.events && person.events.length > 0 && (
-        <View style={styles.eventsContainer}>
-          {person.events.map((event) => (
-            <View key={event.id} style={styles.eventCard}>
-              <ThemedText style={styles.eventName}>
-                📅 {event.name}
-              </ThemedText>
-              {event.location && (
-                <ThemedText style={styles.eventLocation}>
-                  📍 {event.location}
+        {/* タグ */}
+        {person.tags && person.tags.length > 0 && (
+          <View style={styles.tagsContainer}>
+            {person.tags.map((tag) => (
+              <View key={tag.id} style={styles.tag}>
+                <ThemedText style={styles.tagText}>
+                  {tag.name}
                 </ThemedText>
-              )}
-            </View>
-          ))}
-        </View>
-      )}
-    </ThemedView>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* 出会った場所・イベント */}
+        {person.events && person.events.length > 0 && (
+          <View style={styles.eventsContainer}>
+            {person.events.map((event) => (
+              <View key={event.id} style={styles.eventCard}>
+                <ThemedText style={styles.eventName}>
+                  📅 {event.name}
+                </ThemedText>
+                {event.location && (
+                  <ThemedText style={styles.eventLocation}>
+                    📍 {event.location}
+                  </ThemedText>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+      </ThemedView>
+    </Pressable>
   );
 
   if (isLoading) {
@@ -280,6 +294,10 @@ const styles = StyleSheet.create({
   },
   personCard: {
     marginBottom: 16,
+    borderRadius: 12,
+    // Pressableのタップ効果を有効にするための設定
+  },
+  personCardContent: {
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
