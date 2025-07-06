@@ -51,10 +51,18 @@ jest.mock('@/components/ui/SwipeablePersonCard', () => {
   
   // forwardRefで定義されたコンポーネントのモック
   const SwipeablePersonCard = React.forwardRef(({ person, onPress, onDelete, onSwipeOpen, onSwipeClose, ...props }, ref) => {
+    // instantClose関数を含むモックref
+    React.useImperativeHandle(ref, () => ({
+      close: jest.fn(),
+      instantClose: jest.fn(),
+      openLeft: jest.fn(),
+      openRight: jest.fn(),
+    }));
+    
     // 元のPersonCardと同様の構造を再現
     return React.createElement(
       View,
-      { ...props, testID: `swipeable-person-card-${person.id}`, ref },
+      { ...props, testID: `swipeable-person-card-${person.id}` },
       React.createElement(
         TouchableOpacity,
         { 

@@ -18,14 +18,46 @@ interface SwipeablePersonCardProps {
   onSwipeClose?: () => void;
 }
 
+// Swipeableの拡張インターフェース
+interface ExtendedSwipeable extends Swipeable {
+  instantClose?: () => void;
+}
+
 // forwardRefを使用して外部からrefを受け取れるようにする
 export const SwipeablePersonCard = React.forwardRef<
-  Swipeable,
+  ExtendedSwipeable,
   SwipeablePersonCardProps
 >(({ person, onPress, onDelete, onSwipeOpen, onSwipeClose }, ref) => {
-  // 内部refと外部refを統合
-  const internalRef = useRef<Swipeable>(null);
-  const swipeableRef = (ref as React.RefObject<Swipeable>) || internalRef;
+  // 内部refを定義
+  const internalRef = useRef<ExtendedSwipeable>(null);
+  
+  // アニメーションなしで即座に閉じる関数
+  const instantClose = React.useCallback(() => {
+    const swipeableInstance = typeof ref === 'object' && ref?.current ? ref.current : internalRef.current;
+    if (swipeableInstance) {
+      // 通常のclose()を呼び出し、その後すぐにコールバックを実行
+      if (typeof swipeableInstance.close === 'function') {
+        swipeableInstance.close();
+      }
+      
+      // 状態を即座にリセットするために短時間後にコールバックを実行
+      setTimeout(() => {
+        onSwipeClose?.();
+      }, 0);
+    }
+  }, [ref, onSwipeClose]);
+  
+  // refにinstantClose関数を追加
+  React.useImperativeHandle(ref, () => {
+    const swipeableInstance = internalRef.current;
+    if (swipeableInstance) {
+      return {
+        ...swipeableInstance,
+        instantClose,
+      };
+    }
+    return swipeableInstance as ExtendedSwipeable;
+  }, [instantClose]);
   /**
    * 右側に表示される削除アクション
    * 画像の通り赤いボタンで「削除」テキストを表示
@@ -57,14 +89,18 @@ export const SwipeablePersonCard = React.forwardRef<
       <TouchableOpacity
         style={styles.personCard}
         onPress={() => {
-          // スワイプが開いている場合は閉じる
-          if (typeof ref === 'object' && ref?.current) {
-            ref.current.close();
+          // スワイプが開いている場合は即座に閉じてからonPressを実行
+          const swipeableInstance = typeof ref === 'object' && ref?.current ? ref.current : internalRef.current;
+          if (swipeableInstance && typeof swipeableInstance.close === 'function') {
+            swipeableInstance.close();
+            // 閉じた後に少し待ってからonPressを実行
+            setTimeout(() => {
+              onPress();
+            }, 50);
           } else {
-            internalRef.current?.close();
+            // スワイプが開いていない場合は即座にonPressを実行
+            onPress();
           }
-          // 元のonPressを実行
-          onPress();
         }}
         testID={`person-card-${person.id}`}
       >

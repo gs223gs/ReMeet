@@ -40,6 +40,15 @@ export default function HomeScreen() {
     prevOpenedRow.current = currentRef;
   };
   
+  // 即座に閉じる関数（アニメーションなし）
+  const instantCloseRow = () => {
+    if (prevOpenedRow.current && prevOpenedRow.current.instantClose) {
+      prevOpenedRow.current.instantClose();
+      prevOpenedRow.current = null;
+      setOpenSwipeId(null);
+    }
+  };
+  
   // Jotai Atomsから状態を取得
   const [people, setPeople] = useAtom(peopleAtom);
   const [isLoading, setIsLoading] = useAtom(peopleLoadingAtom);
@@ -158,15 +167,23 @@ export default function HomeScreen() {
 
       {/* 人物一覧 */}
       <PanGestureHandler
-        onHandlerStateChange={(event) => {
-          // 上下スワイプで削除ボタンを閉じる
-          if (event.nativeEvent.state === State.BEGAN && prevOpenedRow.current) {
+        onGestureEvent={(event) => {
+          // スクロール中に削除ボタンを即座に閉じる
+          if (prevOpenedRow.current) {
             const { velocityY, translationY } = event.nativeEvent;
-            // 上下方向のジェスチャーを検出
-            if (Math.abs(velocityY) > Math.abs(event.nativeEvent.velocityX) || Math.abs(translationY) > 10) {
-              prevOpenedRow.current.close();
-              prevOpenedRow.current = null;
-              setOpenSwipeId(null);
+            // 縦方向のスクロールを検出（わずかな動きでも反応）
+            if (Math.abs(translationY) > 5 || Math.abs(velocityY) > 50) {
+              instantCloseRow();
+            }
+          }
+        }}
+        onHandlerStateChange={(event) => {
+          // 上下スワイプで削除ボタンを即座に閉じる
+          if (event.nativeEvent.state === State.ACTIVE && prevOpenedRow.current) {
+            const { velocityY, translationY } = event.nativeEvent;
+            // 上下方向のジェスチャーを検出（より感度を上げる）
+            if (Math.abs(velocityY) > 30 || Math.abs(translationY) > 3) {
+              instantCloseRow();
             }
           }
         }}
@@ -178,13 +195,16 @@ export default function HomeScreen() {
             <RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />
           }
           onTouchStart={() => {
-            // スクロールビューの背景がタップされたら開いているスワイプを閉じる
+            // スクロールビューの背景がタップされたら即座にスワイプを閉じる
+            instantCloseRow();
+          }}
+          onScroll={() => {
+            // スクロール中に削除ボタンを即座に閉じる
             if (prevOpenedRow.current) {
-              prevOpenedRow.current.close();
-              prevOpenedRow.current = null;
-              setOpenSwipeId(null);
+              instantCloseRow();
             }
           }}
+          scrollEventThrottle={16}
           testID="home-scroll-view"
         >
         {people.length === 0 ? (
