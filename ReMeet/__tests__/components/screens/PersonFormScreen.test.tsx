@@ -34,13 +34,8 @@ jest.mock('expo-router', () => ({
   }),
 }));
 
-// useFocusEffectのモック
-let mockUseFocusEffectCallback: (() => void) | null = null;
-jest.mock('@react-navigation/native', () => ({
-  useFocusEffect: jest.fn((callback) => {
-    mockUseFocusEffectCallback = callback;
-  }),
-}));
+// React Navigation関連のモック（使用しないが念のため）
+jest.mock('@react-navigation/native', () => ({}));
 
 // Alert.alertのモック
 jest.spyOn(require('react-native').Alert, 'alert').mockImplementation(jest.fn());
@@ -51,7 +46,6 @@ const mockTagService = TagService as jest.Mocked<typeof TagService>;
 describe('PersonFormScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseFocusEffectCallback = null;
     mockBack.mockClear();
   });
 
@@ -74,12 +68,6 @@ describe('PersonFormScreen', () => {
         />
       );
 
-      // useFocusEffectのコールバックを手動実行
-      await waitFor(() => {
-        if (mockUseFocusEffectCallback) {
-          mockUseFocusEffectCallback();
-        }
-      });
 
       // Assert: 画面の表示を確認
       await waitFor(() => {
@@ -155,12 +143,6 @@ describe('PersonFormScreen', () => {
         />
       );
 
-      // useFocusEffectのコールバックを手動実行
-      await waitFor(() => {
-        if (mockUseFocusEffectCallback) {
-          mockUseFocusEffectCallback();
-        }
-      });
 
       // Assert: タグサービスが呼ばれることを確認
       await waitFor(() => {

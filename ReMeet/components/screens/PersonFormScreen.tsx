@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAtom } from 'jotai';
 import { ThemedView } from '@/components/ThemedView';
@@ -36,91 +35,74 @@ export function PersonFormScreen({
 }: PersonFormScreenProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
-  const [initialData, setInitialData] = useState<PersonRegistrationFormData | null>(null);
   const [people, setPeople] = useAtom(peopleAtom);
 
   // 既存人物データをjotaiから取得（編集モード時）
   const existingPerson = isEditMode && personId ? people.find(p => p.id === personId) : null;
 
   // TanStack Queryでタグ一覧を取得
-  const { refetch: refetchTags } = useQuery({
+  const { data: availableTags = [] } = useQuery({
     queryKey: ['tags', isEditMode ? 'edit' : 'register'],
     queryFn: async () => {
       try {
         const tags = await TagService.findAll();
-        const tagNames = tags.map(tag => tag.name);
-        setAvailableTags(tagNames);
-        return tagNames;
+        return tags.map(tag => tag.name);
       } catch (error) {
         console.error('Failed to load available tags:', error);
-        const defaultTags = [
+        // エラー時はデフォルトタグを返却
+        return [
           'フロントエンド', 'バックエンド', 'React', 'TypeScript', 'JavaScript', 
           'Python', 'Node.js', 'デザイナー', 'エンジニア', 'プロダクトマネージャー'
         ];
-        setAvailableTags(defaultTags);
-        return defaultTags;
       }
     },
-    enabled: false,
   });
 
-  // 画面フォーカス時にデータを読み込み
-  useFocusEffect(
-    React.useCallback(() => {
-      if (isEditMode && existingPerson) {
-        // 編集モード：jotaiから既存データを初期値として設定
-        const formData: PersonRegistrationFormData = {
-          name: existingPerson.name,
-          handle: existingPerson.handle || '',
-          company: existingPerson.company || '',
-          position: existingPerson.position || '',
-          description: existingPerson.description || '',
-          productName: existingPerson.productName || '',
-          tags: existingPerson.tags ? existingPerson.tags.map(tag => tag.name).join(', ') : '',
-          memo: existingPerson.memo || '',
-          githubId: existingPerson.githubId || '',
-        };
-        setInitialData(formData);
-      } else if (!isEditMode) {
-        // 登録モード：空の初期値を設定
-        setInitialData({
-          name: '',
-          handle: '',
-          company: '',
-          position: '',
-          description: '',
-          productName: '',
-          tags: '',
-          memo: '',
-          githubId: '',
-        });
-      }
-      refetchTags();
-    }, [isEditMode, existingPerson, refetchTags])
-  );
+  // 初期データを準備
+  const getInitialData = (): PersonRegistrationFormData => {
+    if (isEditMode && existingPerson) {
+      // 編集モード：jotaiから既存データを初期値として設定
+      return {
+        name: existingPerson.name,
+        handle: existingPerson.handle || '',
+        company: existingPerson.company || '',
+        position: existingPerson.position || '',
+        description: existingPerson.description || '',
+        productName: existingPerson.productName || '',
+        tags: existingPerson.tags ? existingPerson.tags.map(tag => tag.name).join(', ') : '',
+        memo: existingPerson.memo || '',
+        githubId: existingPerson.githubId || '',
+      };
+    }
+    
+    // 登録モードまたは編集モードでpersonが見つからない場合：空の初期値
+    return {
+      name: '',
+      handle: '',
+      company: '',
+      position: '',
+      description: '',
+      productName: '',
+      tags: '',
+      memo: '',
+      githubId: '',
+    };
+  };
 
-  // 新規タグ追加処理
+  const initialData = getInitialData();
+
+  // 新規タグ追加処理（TanStack Queryのキャッシュを無効化して再取得）
   const handleNewTagsAdded = async (newTags: string[]) => {
     try {
-      const createdTags = [];
       for (const tagName of newTags) {
         try {
-          const createdTag = await TagService.create({ name: tagName });
-          createdTags.push(createdTag.name);
+          await TagService.create({ name: tagName });
         } catch (error) {
-          if (error instanceof Error && error.message.includes('既に存在します')) {
-            createdTags.push(tagName);
-          } else {
+          if (error instanceof Error && !error.message.includes('既に存在します')) {
             console.error(`Failed to create tag: ${tagName}`, error);
           }
         }
       }
-      
-      setAvailableTags(prev => {
-        const uniqueNewTags = createdTags.filter(tag => !prev.includes(tag));
-        return [...uniqueNewTags, ...prev];
-      });
     } catch (error) {
       console.error('Failed to add new tags:', error);
     }
@@ -247,17 +229,6 @@ export function PersonFormScreen({
       <ThemedView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
         <ThemedText style={{ fontSize: 18, marginBottom: 20 }}>
           人物IDが指定されていません
-        </ThemedText>
-      </ThemedView>
-    );
-  }
-
-  // 初期データが読み込まれていない場合
-  if (!initialData) {
-    return (
-      <ThemedView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-        <ThemedText style={{ fontSize: 18, marginBottom: 20 }}>
-          読み込み中...
         </ThemedText>
       </ThemedView>
     );
