@@ -5,25 +5,45 @@ import { Platform } from 'react-native';
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { useThemeColor } from '@/hooks/useThemeColor';
 
 export default function TabLayout() {
-  const { colorScheme } = useColorScheme();
+  
+  // テーマカラーを取得
+  const tabBarBackground = useThemeColor({}, 'tabBarBackground');
+  const tabIconDefault = useThemeColor({}, 'tabIconDefault');
+  const tabIconSelected = useThemeColor({}, 'tabIconSelected');
+  const borderColor = useThemeColor({}, 'border');
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: tabIconSelected,
+        tabBarInactiveTintColor: tabIconDefault,
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
         tabBarStyle: Platform.select({
           ios: {
-            // Use a transparent background on iOS to show the blur effect
+            // iOS用のスタイル - BlurViewを使用するため背景は透明
             position: 'absolute',
+            borderTopColor: borderColor,
+            borderTopWidth: 0.5,
           },
-          default: {},
+          default: {
+            // Android用のスタイル
+            backgroundColor: tabBarBackground,
+            borderTopColor: borderColor,
+            borderTopWidth: 1,
+            elevation: 8,
+            shadowColor: '#000',
+            shadowOffset: {
+              width: 0,
+              height: -2,
+            },
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+          },
         }),
       }}>
       <Tabs.Screen
