@@ -5,8 +5,9 @@ import {
   View,
   ActivityIndicator,
   Alert,
+  TouchableOpacity,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
 import { ThemedView } from "@/components/ThemedView";
@@ -22,6 +23,7 @@ import type { PersonWithRelations } from "@/database/sqlite-types";
  */
 export default function PersonDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const borderColor = useThemeColor({}, "border");
 
   // TanStack Queryを使用して人物データを取得
@@ -114,6 +116,20 @@ export default function PersonDetailScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      {/* ヘッダー部分 */}
+      <ThemedView style={styles.header}>
+        <ThemedText type="title" style={styles.headerTitle}>
+          {person.name}
+        </ThemedText>
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => router.push(`/person-edit?id=${id}`)}
+          testID="edit-button"
+        >
+          <ThemedText style={styles.editButtonText}>編集</ThemedText>
+        </TouchableOpacity>
+      </ThemedView>
+      
       {/* 人物詳細情報 */}
       <ScrollView
         style={styles.scrollView}
@@ -138,15 +154,12 @@ const PersonDetailCard = ({
   borderColor: string;
 }) => (
   <ThemedView style={[styles.detailCard, { borderColor }]}>
-    {/* 名前 */}
-    <View style={styles.nameSection}>
-      <ThemedText type="title" style={styles.personName}>
-        {person.name}
-      </ThemedText>
-      {person.handle && (
+    {/* ハンドル */}
+    {person.handle && (
+      <View style={styles.handleSection}>
         <ThemedText style={styles.handle}>{person.handle}</ThemedText>
-      )}
-    </View>
+      </View>
+    )}
 
     {/* 会社・役職 */}
     {(person.company || person.position) && (
@@ -249,6 +262,29 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  editButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  editButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   scrollView: {
     flex: 1,
   },
@@ -289,15 +325,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
-  nameSection: {
-    marginBottom: 24,
+  handleSection: {
+    marginBottom: 20,
     alignItems: "center",
-  },
-  personName: {
-    fontSize: 28,
-    fontWeight: "bold",
-    marginBottom: 8,
-    textAlign: "center",
   },
   handle: {
     fontSize: 16,
