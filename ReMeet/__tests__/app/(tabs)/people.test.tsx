@@ -16,14 +16,17 @@ jest.mock('@/database/sqlite-services', () => ({
 }));
 
 // React Navigationのモック
-jest.mock('@react-navigation/native', () => ({
-  useFocusEffect: jest.fn((callback) => {
-    // コンポーネントがマウントされた後に実行
-    React.useEffect(() => {
-      callback();
-    }, []);
-  }),
-}));
+jest.mock('@react-navigation/native', () => {
+  const actualReact = jest.requireActual('react');
+  return {
+    useFocusEffect: jest.fn((callback) => {
+      // コンポーネントがマウントされた後に実行
+      actualReact.useEffect(() => {
+        callback();
+      }, []);
+    }),
+  };
+});
 
 const mockPersonService = PersonService as jest.Mocked<typeof PersonService>;
 
