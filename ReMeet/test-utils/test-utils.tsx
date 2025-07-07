@@ -3,7 +3,7 @@
  * ThemeProvider、TanStack QueryのQueryClientProvider、Jotai Providerなど必要なProviderを提供
  */
 import React from 'react';
-import { render, RenderOptions } from '@testing-library/react-native';
+import { render, RenderOptions, act } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Provider as JotaiProvider } from 'jotai';
 import { ThemeProvider } from '@/contexts/ThemeContext';

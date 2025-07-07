@@ -25,16 +25,14 @@ describe('useSwipeDelete', () => {
     isPending: false,
   };
 
-  const mockUsePersonMutations = usePersonMutations as jest.MockedFunction<typeof usePersonMutations>;
-
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUsePersonMutations.mockReturnValue({
+    jest.mocked(usePersonMutations).mockReturnValue({
       deletePersonMutation: mockDeletePersonMutation,
-      createPersonMutation: {} as any,
-      updatePersonMutation: {} as any,
+      createPersonMutation: jest.fn(),
+      updatePersonMutation: jest.fn(),
       refreshPeopleAtom: jest.fn(),
-    });
+    } as unknown as ReturnType<typeof usePersonMutations>);
   });
 
   const mockPerson: PersonWithRelations = {
@@ -65,7 +63,7 @@ describe('useSwipeDelete', () => {
     it('usePersonMutationsを呼び出す', () => {
       renderHook(() => useSwipeDelete());
 
-      expect(mockUsePersonMutations).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(usePersonMutations)).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -108,15 +106,15 @@ describe('useSwipeDelete', () => {
 
   describe('ローディング状態', () => {
     it('削除中の状態を正しく返す', () => {
-      mockUsePersonMutations.mockReturnValue({
+      jest.mocked(usePersonMutations).mockReturnValue({
         deletePersonMutation: {
           ...mockDeletePersonMutation,
           isPending: true,
         },
-        createPersonMutation: {} as any,
-        updatePersonMutation: {} as any,
+        createPersonMutation: jest.fn(),
+        updatePersonMutation: jest.fn(),
         refreshPeopleAtom: jest.fn(),
-      });
+      } as unknown as ReturnType<typeof usePersonMutations>);
 
       const { result } = renderHook(() => useSwipeDelete());
 

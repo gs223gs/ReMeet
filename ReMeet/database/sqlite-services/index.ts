@@ -34,3 +34,27 @@ export type {
   CreateTagData, 
   TagSearchFilter
 } from './TagService';
+
+export { 
+  EventService,
+  create as createEvent,
+  findById as findEventById,
+  findMany as findManyEvents,
+  findAll as findAllEvents,
+  count as countEvents,
+  update as updateEvent,
+  deleteById as deleteEventById,
+  hasParticipants,
+  getParticipantCount,
+  addPersonToEvent,
+  removePersonFromEvent,
+  findEventsByPersonId,
+  clearMockData as clearEventMockData,
+  addMockData as addEventMockData,
+  resetMockData as resetEventMockData
+} from './EventService';
+export type { 
+  CreateEventData, 
+  UpdateEventData,
+  EventSearchFilter
+} from './EventService';

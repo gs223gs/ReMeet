@@ -147,15 +147,17 @@ export default function HomeScreen() {
     </ThemedView>
   );
 
-  // エラー時の表示
-  if (error) {
-    console.error('人物データの読み込みに失敗しました:', error);
-    Alert.alert(
-      'エラー',
-      '人物データの読み込みに失敗しました。',
-      [{ text: 'OK' }]
-    );
-  }
+  // エラー時の表示（一度だけ実行）
+  React.useEffect(() => {
+    if (error) {
+      console.error('人物データの読み込みに失敗しました:', error);
+      Alert.alert(
+        'エラー',
+        '人物データの読み込みに失敗しました。',
+        [{ text: 'OK', onPress: () => setError(null) }]
+      );
+    }
+  }, [error, setError]);
 
 
   if (isLoading) {
