@@ -6,13 +6,13 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  TouchableOpacity,
-  Alert
+  TouchableOpacity
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ThemedText } from '@/components/ThemedText';
+import { useThemeColor } from '@/hooks/useThemeColor';
 import { FormInput } from './FormInput';
 import { 
   eventRegistrationSchema, 
@@ -43,6 +43,14 @@ export function EventForm({
   isEditMode = false
 }: EventFormProps) {
   const [showDatePicker, setShowDatePicker] = useState(false);
+  
+  // テーマカラーを取得
+  const backgroundColor = useThemeColor({}, 'background');
+  const textColor = useThemeColor({}, 'text');
+  const borderColor = useThemeColor({}, 'border');
+  
+  // カラースキームを判定（背景色が明るいかどうかで判断）
+  const isDarkMode = backgroundColor === '#1C1C1E' || backgroundColor === '#000000';
 
   // react-hook-formの設定
   const { 
@@ -109,7 +117,7 @@ export function EventForm({
           
           <View style={styles.dateContainer}>
             <TouchableOpacity
-              style={styles.dateButton}
+              style={[styles.dateButton, { borderColor: borderColor, backgroundColor: backgroundColor }]}
               onPress={() => setShowDatePicker(true)}
               testID="date-picker-button"
             >
@@ -153,6 +161,8 @@ export function EventForm({
             onChange={handleDateChange}
             maximumDate={new Date()} // 過去の日付のみ選択可能
             testID="date-time-picker"
+            textColor={textColor}
+            themeVariant={isDarkMode ? 'dark' : 'light'}
           />
         )}
 
@@ -212,9 +222,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#ccc',
     borderRadius: 8,
-    backgroundColor: '#f9f9f9',
   },
   dateButtonText: {
     fontSize: 16,

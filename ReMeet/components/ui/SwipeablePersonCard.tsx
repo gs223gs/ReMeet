@@ -25,7 +25,6 @@ export const SwipeablePersonCard = React.forwardRef<
 >(({ person, onPress, onDelete, onSwipeOpen, onSwipeClose }, ref) => {
   // 内部refと外部refを統合
   const internalRef = useRef<Swipeable>(null);
-  const swipeableRef = (ref as React.RefObject<Swipeable>) || internalRef;
   /**
    * 右側に表示される削除アクション
    * 画像の通り赤いボタンで「削除」テキストを表示
