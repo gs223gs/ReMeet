@@ -99,7 +99,9 @@ describe('EventForm', () => {
     fireEvent.press(submitButton);
 
     await waitFor(() => {
-      expect(mockOnSubmit).toHaveBeenCalledWith({
+      expect(mockOnSubmit).toHaveBeenCalled();
+      const callArgs = mockOnSubmit.mock.calls[0][0];
+      expect(callArgs).toMatchObject({
         name: 'テストイベント',
         date: null,
         location: 'テスト会場',

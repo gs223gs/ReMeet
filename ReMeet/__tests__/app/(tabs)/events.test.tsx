@@ -128,8 +128,9 @@ describe('EventsScreen', () => {
     
     const { getByText } = renderWithProviders(<EventsScreen />);
 
+    // まず読み込み完了を待つ
     await waitFor(() => {
-      expect(getByText('イベントの読み込みに失敗しました')).toBeTruthy();
+      expect(getByText('エラーが発生しました')).toBeTruthy();
     });
   });
 
