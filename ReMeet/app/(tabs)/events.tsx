@@ -18,12 +18,7 @@ export default function EventsScreen() {
   const { data: events = [], isLoading, error, refetch, isRefetching } = useQuery({
     queryKey: ['events'],
     queryFn: async () => {
-      try {
-        return await EventService.findAll();
-      } catch (error) {
-        console.error('Failed to load events:', error);
-        return [];
-      }
+      return await EventService.findAll();
     },
   });
 

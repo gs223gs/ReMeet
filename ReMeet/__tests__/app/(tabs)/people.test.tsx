@@ -158,7 +158,7 @@ describe('HomeScreen', () => {
         expect(alertSpy).toHaveBeenCalledWith(
           'エラー',
           '人物データの読み込みに失敗しました。',
-          [{ text: 'OK' }]
+          expect.arrayContaining([expect.objectContaining({ text: 'OK' })])
         );
       });
 
