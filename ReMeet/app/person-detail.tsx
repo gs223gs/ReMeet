@@ -38,13 +38,11 @@ export default function PersonDetailScreen() {
       if (!id) {
         throw new Error("人物IDが指定されていません");
       }
-      try {
-        const personData = await PersonService.findById(id);
-        return personData;
-      } catch (error) {
-        console.error("人物データの取得エラー:", error);
-        throw new Error("人物データの取得に失敗しました");
+      const personData = await PersonService.findById(id);
+      if (!personData) {
+        throw new Error("指定された人物が見つかりません");
       }
+      return personData;
     },
     staleTime: 1000 * 60 * 5, // 5分間キャッシュ
     enabled: !!id, // idが存在する場合のみクエリを実行

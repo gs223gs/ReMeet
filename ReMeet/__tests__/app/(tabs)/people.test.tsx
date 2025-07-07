@@ -13,6 +13,10 @@ import type { PersonWithRelations } from '@/database/sqlite-types';
 jest.mock('@/database/sqlite-services', () => ({
   PersonService: {
     findMany: jest.fn(),
+    findById: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
   },
 }));
 
@@ -28,6 +32,23 @@ let mockUseFocusEffectCallback: (() => void) | null = null;
 jest.mock('@react-navigation/native', () => ({
   useFocusEffect: jest.fn((callback) => {
     mockUseFocusEffectCallback = callback;
+  }),
+}));
+
+// usePersonMutationsのモック
+jest.mock('@/hooks/usePersonMutations', () => ({
+  usePersonMutations: () => ({
+    deletePersonMutation: {
+      mutate: jest.fn(),
+      isLoading: false,
+    },
+  }),
+}));
+
+// useSwipeDeleteのモック
+jest.mock('@/hooks/useSwipeDelete', () => ({
+  useSwipeDelete: () => ({
+    handleSwipeDelete: jest.fn(),
   }),
 }));
 
