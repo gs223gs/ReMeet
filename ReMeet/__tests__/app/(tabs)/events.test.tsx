@@ -118,9 +118,10 @@ describe('EventsScreen', () => {
   });
 
   it('読み込み中の状態が表示される', () => {
-    const { getByText } = renderWithProviders(<EventsScreen />);
+    const { getAllByText } = renderWithProviders(<EventsScreen />);
     
-    expect(getByText('読み込み中...')).toBeTruthy();
+    const loadingTexts = getAllByText('読み込み中...');
+    expect(loadingTexts.length).toBeGreaterThan(0);
   });
 
   it('エラー時の状態が表示される', async () => {

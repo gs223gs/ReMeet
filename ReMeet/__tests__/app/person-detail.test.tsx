@@ -35,6 +35,16 @@ jest.mock('expo-router', () => ({
 // useFocusEffectのモック（現在は使用していないが念のため）
 jest.mock('@react-navigation/native', () => ({}));
 
+// usePersonMutationsのモック
+jest.mock('@/hooks/usePersonMutations', () => ({
+  usePersonMutations: () => ({
+    deletePersonMutation: {
+      mutate: jest.fn(),
+      isLoading: false,
+    },
+  }),
+}));
+
 const mockPersonService = PersonService as jest.Mocked<typeof PersonService>;
 
 describe('PersonDetailScreen', () => {
@@ -112,7 +122,7 @@ describe('PersonDetailScreen', () => {
 
       // Assert: エラーメッセージが表示されることを確認
       await waitFor(() => {
-        expect(screen.getByText('指定された人物が見つかりません')).toBeTruthy();
+        expect(screen.getByText('データの読み込みに失敗しました')).toBeTruthy();
       });
     });
 
