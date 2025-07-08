@@ -17,7 +17,7 @@ interface SwipeableCardListProps {
   onHideCard?: (person: PersonWithRelations) => void;
   refreshing?: boolean;
   onRefresh?: () => void;
-  ListEmptyComponent?: React.ComponentType<any> | React.ReactElement | null;
+  ListEmptyComponent?: React.ComponentType | React.ReactElement | null;
 }
 
 export const SwipeableCardList: React.FC<SwipeableCardListProps> = ({

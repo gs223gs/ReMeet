@@ -8,7 +8,7 @@ import {
   Platform,
   TouchableOpacity
 } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ThemedText } from '@/components/ThemedText';
@@ -71,7 +71,7 @@ export function EventForm({
   const selectedDate = watch('date');
 
   // 日付選択時の処理
-  const handleDateChange = (event: any, selectedDate?: Date) => {
+  const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     setShowDatePicker(Platform.OS === 'ios');
     if (selectedDate) {
       setValue('date', selectedDate);

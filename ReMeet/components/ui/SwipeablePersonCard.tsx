@@ -14,7 +14,7 @@ interface SwipeablePersonCardProps {
   person: PersonWithRelations;
   onPress: () => void;
   onDelete: () => void;
-  onSwipeOpen?: (ref: any) => void;
+  onSwipeOpen?: (ref: Swipeable) => void;
   onSwipeClose?: () => void;
 }
 
@@ -48,7 +48,9 @@ export const SwipeablePersonCard = React.forwardRef<
       rightThreshold={40}
       onSwipeableOpen={() => {
         const currentRef = typeof ref === 'object' && ref?.current ? ref.current : internalRef.current;
-        onSwipeOpen?.(currentRef);
+        if (currentRef) {
+          onSwipeOpen?.(currentRef);
+        }
       }}
       onSwipeableClose={onSwipeClose}
       testID={`swipeable-person-card-${person.id}`}
